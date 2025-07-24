@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relógio com Alarme</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="sidebar">
+        <ul>
+            <li data-target="relogio" class="active">
+                <i class="fas fa-clock"></i>
+                <span class="nav-text">Relógio</span>
+            </li>
+            <li data-target="discord">
+                <i class="fab fa-discord"></i>
+                <span class="nav-text">Discord</span>
+            </li>
+        </ul>
+    </nav>
+
+    <main class="content">
+        <section id="relogio-section" class="page active">
+            <div class="relogio-container">
+                <div id="mute-button" class="mute-button">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h1>Horário de Brasília</h1>
+                <div id="relogio">00:00:00</div>
+                <div id="data"></div>
+                <img id="alarme-gif" src="Relogio/GifAlarme/seu-gif.gif" alt="Alarme!" style="display: none;">
+            </div>
+        </section>
+
+        <section id="discord-section" class="page">
+            <div class="discord-container">
+                <h1>Junte-se a Nós!</h1>
+                <p>Clique no botão abaixo para entrar no nosso servidor do Discord e fazer parte da comunidade.</p>
+                <a href="discord.gg/orochi" target="_blank" class="discord-button">
+                    <i class="fab fa-discord"></i> Entrar no Servidor
+                </a>
+            </div>
+        </section>
+    </main>
+
+
+    <audio id="pre-alarme-som" src="Relogio/SomAlarme/pre-alarme.mp3" loop></audio>
+    <audio id="alarme-principal-som" src="Relogio/SomAlarme/SomAlarme.mp3"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body {
+    background-color: #121212;
+    color: #E0E0E0;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    display: flex;
+}
+
+/* --- Barra Lateral --- */
+.sidebar {
+    width: 80px;
+    background-color: #181818;
+    padding-top: 20px;
+    height: 100vh;
+    transition: width 0.3s;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.sidebar:hover {
+    width: 250px;
+}
+
+.sidebar ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar ul li {
+    padding: 15px 25px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #AAAAAA;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar ul li:hover, .sidebar ul li.active {
+    background-color: #00FFFF;
+    color: #121212;
+}
+
+.sidebar ul li i {
+    font-size: 24px;
+    margin-right: 20px;
+    width: 30px;
+    text-align: center;
+}
+
+.nav-text {
+    font-size: 18px;
+    white-space: nowrap;
+}
+
+/* --- Conteúdo Principal --- */
+.content {
+    flex-grow: 1;
+    margin-left: 80px;
+    padding: 20px;
+    transition: margin-left 0.3s;
+}
+
+.sidebar:hover ~ .content {
+    margin-left: 250px;
+}
+
+/* --- Controle das Páginas/Seções --- */
+.page {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.page.active {
+    display: flex;
+}
+
+/* --- Estilos do Relógio (Container) --- */
+.relogio-container {
+    position: relative; /* Necessário para posicionar o botão de mutar */
+    background: #1E1E1E;
+    padding: 40px 60px;
+    border-radius: 20px;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    text-align: center;
+}
+
+/* --- NOVO: Estilos do Botão de Mutar --- */
+.mute-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    cursor: pointer;
+    font-size: 24px;
+    color: #AAAAAA;
+    transition: color 0.3s, transform 0.2s;
+}
+
+.mute-button:hover {
+    color: #FFFFFF;
+    transform: scale(1.1);
+}
+
+.mute-button.muted i::before {
+    content: "\f6a9"; /* Ícone fas fa-bell-slash */
+    color: #F44336; /* Vermelho */
+}
+/* ------------------------------------ */
+
+.relogio-container h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    color: #00FFFF;
+    text-shadow: 0 0 10px #00FFFF;
+}
+
+#relogio {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 6rem;
+    font-weight: 700;
+    letter-spacing: 5px;
+}
+
+#data {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    margin-top: 10px;
+    color: #CCCCCC;
+}
+
+#alarme-gif {
+    margin-top: 20px;
+    max-width: 150px;
+    border-radius: 10px;
+}
+
+/* --- Estilos da Seção Discord --- */
+.discord-container {
+    text-align: center;
+    background: #2c2f33;
+    padding: 40px 60px;
+    border-radius: 20px;
+    box-shadow: 0 0 25px rgba(88, 101, 242, 0.3);
+    border: 1px solid rgba(88, 101, 242, 0.4);
+}
+
+.discord-container h1 {
+    color: #5865F2;
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+.discord-container p {
+    font-size: 1.2rem;
+    color: #E0E0E0;
+    max-width: 500px;
+    margin-bottom: 30px;
+}
+
+.discord-button {
+    background-color: #5865F2;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 1.2rem;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.discord-button:hover {
+    background-color: #4752C4;
+    transform: translateY(-2px);
+}
