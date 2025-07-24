@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
             preAlarmeTocou = true;
         }
 
-        if (horas === '19' && minutos === '30' && segundos >= '00' && !alarmePrincipalTocouHoje) {
+        if (horas === '00' && minutos === '00' && segundos >= '00' && !alarmePrincipalTocouHoje) {
             pararPreAlarme();
             tocarAlarmePrincipal();
             alarmePrincipalTocouHoje = true;
