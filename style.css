@@ -163,6 +163,7 @@ body {
     max-width: 500px;
     position: relative;
     margin: 0 auto;
+    margin-right: 500px;
 }
 
 .discord-container h1 {
