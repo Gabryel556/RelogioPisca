@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const lofiPlayer = document.getElementById('lofi-music');
     const playPauseBtn = document.getElementById('play-pause-btn');
     const volumeSlider = document.getElementById('volume-slider');
+    const elementoRelogioNoronha = document.getElementById('relogio-noronha');
+const elementoRelogioManaus = document.getElementById('relogio-manaus');
+const elementoRelogioAcre = document.getElementById('relogio-acre');
+
     let lofiEstavaTocando = false;
 
     navItems.forEach(item => {
@@ -61,28 +65,50 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function atualizarRelogio() {
+    const dataAtual = new Date();
+
+    // Função auxiliar para formatar e atualizar um relógio
+    const formatarEAtualizar = (timeZone, elementoRelogio, elementoData = null) => {
         const opcoesHora = {
-            timeZone: 'America/Sao_Paulo',
+            timeZone: timeZone,
             hour: '2-digit', minute: '2-digit', second: '2-digit',
             hour12: false
         };
-        const opcoesData = {
-            timeZone: 'America/Sao_Paulo',
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-        };
-
-        const dataAtual = new Date();
         const formatadorHora = new Intl.DateTimeFormat('pt-BR', opcoesHora);
-        const formatadorData = new Intl.DateTimeFormat('pt-BR', opcoesData);
-
         const horaFormatada = formatadorHora.format(dataAtual);
-        const dataFormatada = formatadorData.format(dataAtual);
 
         elementoRelogio.textContent = horaFormatada;
-        elementoData.textContent = capitalizarPrimeiraLetra(dataFormatada);
 
-        verificarAlarmes(horaFormatada);
-    }
+        // Atualiza a data apenas para o relógio principal
+        if (elementoData) {
+            const opcoesData = {
+                timeZone: timeZone,
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            };
+            const formatadorData = new Intl.DateTimeFormat('pt-BR', opcoesData);
+            elementoData.textContent = capitalizarPrimeiraLetra(formatadorData.format(dataAtual));
+        }
+
+        return horaFormatada;
+    };
+
+    // --- ATUALIZA TODOS OS RELÓGIOS ---
+
+    // 1. Relógio Principal (Brasília - UTC-3)
+    const horaBrasilia = formatarEAtualizar('America/Sao_Paulo', elementoRelogio, elementoData);
+
+    // 2. Relógio de Fernando de Noronha (UTC-2)
+    formatarEAtualizar('America/Noronha', elementoRelogioNoronha);
+
+    // 3. Relógio de Manaus (Amazonas - UTC-4)
+    formatarEAtualizar('America/Manaus', elementoRelogioManaus);
+
+    // 4. Relógio do Acre (UTC-5)
+    formatarEAtualizar('America/Rio_Branco', elementoRelogioAcre);
+
+    // A verificação do alarme continua baseada na hora de Brasília
+    verificarAlarmes(horaBrasilia);
+}
 
     function verificarAlarmes(hora) {
         if (isMuted) return; // Se estiver mutado, não faz nada

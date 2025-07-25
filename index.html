@@ -23,17 +23,31 @@
     </nav>
 
     <main class="content">
-        <section id="relogio-section" class="page active">
-            <div class="relogio-container">
-                <div id="mute-button" class="mute-button">
-                    <i class="fas fa-bell"></i>
-                </div>
-                <h1>Horário de Brasília</h1>
-                <div id="relogio">00:00:00</div>
-                <div id="data"></div>
-                <video id="alarme-gif" src="Relogio/GifAlarme/VideoAlarme.mp4" loop muted autoplay playsinline style="display: none; max-width: 720px;"></video>
-            </div>
-        </section>
+        <div class="relogio-container">
+    <div id="mute-button" class="mute-button">
+        <i class="fas fa-bell"></i>
+    </div>
+    <h1>Horário de Brasília</h1>
+    <div id="relogio">00:00:00</div>
+    <div id="data"></div>
+
+    <div class="outros-relogios-container">
+        <div class="relogio-secundario">
+            <div class="fuso-titulo">Fernando de Noronha</div>
+            <div id="relogio-noronha" class="fuso-hora">00:00:00</div>
+        </div>
+        <div class="relogio-secundario">
+            <div class="fuso-titulo">Manaus (Amazonas)</div>
+            <div id="relogio-manaus" class="fuso-hora">00:00:00</div>
+        </div>
+        <div class="relogio-secundario">
+            <div class="fuso-titulo">Rio Branco (Acre)</div>
+            <div id="relogio-acre" class="fuso-hora">00:00:00</div>
+        </div>
+    </div>
+
+    <img id="alarme-gif" src="Relogio/GifAlarme/seu-gif.gif" alt="Alarme!" style="display: none;">
+</div>
 
         <section id="discord-section" class="page">
             <div class="discord-container">
