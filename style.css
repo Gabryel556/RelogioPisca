@@ -56,6 +56,15 @@ body {
 .nav-text {
     font-size: 18px;
     white-space: nowrap;
+    opacity: 0; /* Começa totalmente transparente */
+    visibility: hidden; /* Garante que está escondido e não pode ser selecionado */
+    transition: opacity 0.2s ease-in-out;
+}
+
+.sidebar:hover .nav-text {
+    opacity: 1; /* O texto se torna 100% visível */
+    visibility: visible;
+    transition-delay: 0.1s; /* Um pequeno atraso para o texto aparecer depois que a barra começar a expandir */
 }
 
 /* --- Conteúdo Principal --- */
