@@ -200,19 +200,19 @@ body {
     bottom: 20px;
     right: 20px;
     background-color: rgba(0, 0, 0, 0.4);
-    padding: 10px 15px;
+    padding: 12px 20px; 
     border-radius: 50px;
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 18px; 
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 100; /* Adicionado */
+    z-index: 100;
 }
 
 .music-player-container i {
-    font-size: 18px;
+    font-size: 22px; 
     color: #E0E0E0;
     cursor: pointer;
     transition: color 0.2s;
@@ -225,19 +225,20 @@ body {
 #volume-slider {
     -webkit-appearance: none;
     appearance: none;
-    width: 100px;
-    height: 5px;
+    width: 130px;
+    height: 6px; 
     background: #555;
     outline: none;
     border-radius: 3px;
     transition: opacity 0.2s;
 }
-
+    
 #volume-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 15px;
-    height: 15px;
+    /* Aumentei o tamanho do círculo da barra */
+    width: 16px; 
+    height: 16px; 
     background: #00FFFF;
     cursor: pointer;
     border-radius: 50%;
