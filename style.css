@@ -199,6 +199,7 @@ body {
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 100; /* Adicionado */
 }
 
 .music-player-container i {
@@ -231,4 +232,36 @@ body {
     background: #00FFFF;
     cursor: pointer;
     border-radius: 50%;
+}
+
+/* --- Estilos do Rodapé --- */
+footer {
+    position: fixed; /* Fixa o rodapé na tela, ele não vai rolar com o conteúdo */
+    bottom: 0;       /* Alinha na parte de baixo da tela */
+    left: 0;         /* Garante que comece no canto esquerdo */
+    width: 100%;     /* Faz o rodapé ocupar toda a largura da tela */
+    padding: 10px 0; /* Adiciona um espaçamento interno para não ficar colado na borda */
+    background-color: rgba(18, 18, 18, 0.5); /* Fundo escuro semi-transparente */
+    backdrop-filter: blur(5px); /* Efeito de vidro fosco, combinando com o player */
+    -webkit-backdrop-filter: blur(5px);
+    border-top: 1px solid rgba(0, 255, 255, 0.1); /* Linha ciano sutil no topo */
+    text-align: center; /* Centraliza o texto */
+    font-family: 'Roboto', sans-serif; /* Usa a mesma fonte do resto do corpo */
+    font-size: 1.5rem;  /* Deixa a fonte um pouco menor, como é comum em rodapés */
+    color: #AAAAAA;    /* Cor cinza claro para o texto, sendo discreto */
+}
+
+footer p {
+    margin: 4px 0; /* Adiciona um pequeno espaço entre as linhas de texto */
+}
+
+footer a {
+    color: #00FFFF; /* Deixa o link com a cor ciano do tema */
+    text-decoration: none; /* Remove o sublinhado padrão de links */
+    font-weight: 600;
+    transition: text-shadow 0.3s ease; /* Adiciona uma transição suave para o efeito de brilho */
+}
+
+footer a:hover {
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.8); /* Adiciona um brilho ao passar o mouse */
 }
