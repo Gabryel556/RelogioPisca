@@ -184,3 +184,51 @@ body {
     background-color: #4752C4;
     transform: translateY(-2px);
 }
+
+/* --- Estilos do Player de Música Lo-Fi --- */
+.music-player-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 10px 15px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.music-player-container i {
+    font-size: 18px;
+    color: #E0E0E0;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.music-player-container i:hover {
+    color: #00FFFF;
+}
+
+#volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100px;
+    height: 5px;
+    background: #555;
+    outline: none;
+    border-radius: 3px;
+    transition: opacity 0.2s;
+}
+
+#volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    background: #00FFFF;
+    cursor: pointer;
+    border-radius: 50%;
+}

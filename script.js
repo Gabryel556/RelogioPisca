@@ -3,6 +3,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE NAVEGAÇÃO DAS ABAS ---
     const navItems = document.querySelectorAll('.sidebar ul li');
     const pages = document.querySelectorAll('.page');
+    const lofiPlayer = document.getElementById('lofi-music');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const volumeSlider = document.getElementById('volume-slider');
+    let lofiEstavaTocando = false;
 
     navItems.forEach(item => {
         item.addEventListener('mouseover', () => {
@@ -15,6 +19,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    playPauseBtn.addEventListener('click', () => {
+        if (lofiPlayer.paused) {
+            lofiPlayer.play();
+            playPauseBtn.classList.remove('fa-play');
+            playPauseBtn.classList.add('fa-pause');
+        } else {
+            lofiPlayer.pause();
+            playPauseBtn.classList.remove('fa-pause');
+            playPauseBtn.classList.add('fa-play');
+        }
+    });
+
+    volumeSlider.addEventListener('input', (e) => {
+        lofiPlayer.volume = e.target.value;
+    });
+    
     // --- LÓGICA DO RELÓGIO E ALARME ---
     const elementoRelogio = document.getElementById('relogio');
     const elementoData = document.getElementById('data');
@@ -87,11 +107,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function tocarPreAlarme() {
-        if (isMuted) return; // Verificação dupla de segurança
-        console.log("PRÉ-ALARME! Faltam 10 segundos para a meia-noite!");
-        elementoPreAlarmeSom.currentTime = 0;
-        elementoPreAlarmeSom.play();
+    if (isMuted) return;
+    // Pausa a música Lo-Fi e guarda o estado
+    if (!lofiPlayer.paused) {
+        lofiEstavaTocando = true;
+        lofiPlayer.pause();
+    } else {
+        lofiEstavaTocando = false;
     }
+
+    console.log("PRÉ-ALARME! Faltam 10 segundos para a meia-noite!");
+    elementoPreAlarmeSom.currentTime = 0;
+    elementoPreAlarmeSom.play();
+}
 
     function pararPreAlarme() {
         elementoPreAlarmeSom.pause();
@@ -99,18 +127,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function tocarAlarmePrincipal() {
-        if (isMuted) return; // Verificação dupla de segurança
+        if (isMuted) return; 
+
+        // Pausa a música Lo-Fi caso o pré-alarme não tenha tocado
+        if (!lofiPlayer.paused) {
+            lofiEstavaTocando = true;
+            lofiPlayer.pause();
+        }
         console.log("ALARME! É meia-noite!");
         elementoAlarmeGif.style.display = 'block';
         elementoAlarmePrincipalSom.currentTime = 0;
         elementoAlarmePrincipalSom.play();
 
         setTimeout(() => {
-            elementoAlarmeGif.style.display = 'none';
-            elementoAlarmePrincipalSom.pause();
-            elementoAlarmePrincipalSom.currentTime = 0;
-        }, 10000);
-    }
+        elementoAlarmeGif.style.display = 'none';
+        elementoAlarmePrincipalSom.pause();
+        elementoAlarmePrincipalSom.currentTime = 0;
+        elementoAlarmePrincipalSom.loop = false;
+
+        // Retoma a música Lo-Fi se ela estava tocando antes
+        if (lofiEstavaTocando) {
+            lofiPlayer.play();
+        }
+
+    }, 10000); 
+}
 
     function capitalizarPrimeiraLetra(string) {
         return string.replace(/\b\w/g, char => char.toUpperCase());
