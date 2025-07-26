@@ -6,6 +6,10 @@ on:
     - cron: '0 * * * *'
   workflow_dispatch: # Permite rodar manualmente pela aba Actions
 
+# ADICIONADO: Bloco que concede permissão para o robô escrever no repositório
+permissions:
+  contents: write
+
 jobs:
   update_time_job:
     runs-on: ubuntu-latest
@@ -18,7 +22,7 @@ jobs:
           # Busca a hora da API e extrai apenas a data/hora do JSON
           DATETIME_JSON=$(curl -s https://timeapi.io/api/Time/current/zone?timeZone=Etc/UTC)
           ISO_DATETIME=$(echo $DATETIME_JSON | jq -r .dateTime)
-
+          
           # Cria o novo conteúdo do arquivo time.json
           echo "{\"dateTime\": \"$ISO_DATETIME\"}" > time.json
 
