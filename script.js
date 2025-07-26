@@ -130,6 +130,14 @@ document.addEventListener('DOMContentLoaded', () => {
         formatarEAtualizar('America/Manaus', elementoRelogioManaus);
         formatarEAtualizar('America/Rio_Branco', elementoRelogioAcre);
 
+        // --- ADICIONE ESTE BLOCO NO FINAL DA FUNÇÃO ---
+        // Torna os relógios visíveis após a primeira atualização
+        elementoRelogio.style.opacity = 1;
+        elementoRelogioNoronha.style.opacity = 1;
+        elementoRelogioManaus.style.opacity = 1;
+        elementoRelogioAcre.style.opacity = 1;
+        // ---------------------------------------------
+
         verificarAlarmes(horaBrasilia);
     }
 
