@@ -86,19 +86,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- NOVO: FUNÇÃO PARA BUSCAR HORA UNIVERSAL E INICIAR OS RELÓGIOS ---
     async function iniciarRelogiosSincronizados() {
-    let dataInicial; // Esta variável guardará nossa data de partida
+    let dataInicial;
 
-    // --- PLANO A: TENTAR BUSCAR A HORA DA API EM TEMPO REAL ---
+    // --- PLANO A: TENTAR A NOVA API, MAIS LEVE E DIRETA ---
     try {
-        // Vamos tentar a primeira API novamente, que é muito boa e pode funcionar agora
-        const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
+        // Esta API retorna apenas o texto da data, nada mais.
+        const response = await fetch('https://www.timeapi.org/utc/now');
         if (!response.ok) {
-            // Se a resposta não for bem-sucedida (ex: erro 500), força a ida para o catch
-            throw new Error('API primária falhou com status: ' + response.status);
+            throw new Error('API primária (timeapi.org) falhou com status: ' + response.status);
         }
-        const data = await response.json();
-        dataInicial = new Date(data.utc_datetime);
-        console.log("Sucesso! Usando hora da API em tempo real.");
+        // Usamos .text() pois a resposta não é JSON
+        const dataTexto = await response.text();
+        dataInicial = new Date(dataTexto);
+        console.log("Sucesso! Usando hora da API em tempo real (timeapi.org).");
 
     } catch (error) {
         // --- PLANO B: SE A API FALHAR, USAR O ARQUIVO LOCAL COMO FALLBACK ---
@@ -108,23 +108,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             dataInicial = new Date(data.dateTime);
         } catch (fallbackError) {
-            // --- PLANO C: SE ATÉ O ARQUIVO LOCAL FALHAR, MOSTRAR ERRO ---
+            // --- PLANO C: SE TUDO FALHAR, MOSTRAR ERRO ---
             console.error("Falha crítica: não foi possível carregar nem a API nem o time.json.", fallbackError);
-            elementoRelogio.textContent = "Erro de dados";
-            return; // Para a execução completamente
+            elementoRelogio.textContent = "Erro";
+            // Para os outros relógios também
+            elementoRelogioNoronha.textContent = "Erro";
+            elementoRelogioManaus.textContent = "Erro";
+            elementoRelogioAcre.textContent = "Erro";
+            return;
         }
     }
 
+    // Se a data obtida for inválida por algum motivo, para a execução.
+    if (isNaN(dataInicial.getTime())) {
+        console.error("A data obtida é inválida.");
+        elementoRelogio.textContent = "Data inválida";
+        return;
+    }
+
     // --- LÓGICA DO RELÓGIO (INALTERADA) ---
-    // A partir daqui, o código usa a 'dataInicial' que foi obtida com sucesso
     let dataAtualSincronizada = dataInicial;
-    authoritativeStartTime = dataInicial;
-    localStartTime = Date.now();
     
-    // Atualiza a tela pela primeira vez imediatamente
     atualizarTelaDeRelogios(dataAtualSincronizada);
 
-    // Inicia o loop para os próximos segundos
     clockIntervalId = setInterval(() => {
         dataAtualSincronizada.setSeconds(dataAtualSincronizada.getSeconds() + 1);
         atualizarTelaDeRelogios(dataAtualSincronizada);
