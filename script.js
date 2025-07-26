@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const playPauseBtn = document.getElementById('play-pause-btn');
     const volumeSlider = document.getElementById('volume-slider');
     let lofiEstavaTocando = false;
+    let clockIntervalId = null;
 
     playPauseBtn.addEventListener('click', () => {
         if (lofiPlayer.paused) {
@@ -102,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     atualizarTelaDeRelogios(dataAtualSincronizada);
 
     // Inicia o loop para os próximos segundos
-    setInterval(() => {
+    clockIntervalId = setInterval(() => {
         dataAtualSincronizada.setSeconds(dataAtualSincronizada.getSeconds() + 1);
         atualizarTelaDeRelogios(dataAtualSincronizada);
     }, 1000);
@@ -194,7 +195,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function capitalizarPrimeiraLetra(string) {
         return string.replace(/\b\w/g, char => char.toUpperCase());
     }
-
+    document.addEventListener("visibilitychange", () => {
+    // Se a página NÃO estiver escondida (ou seja, o usuário acabou de voltar)
+        if (!document.hidden) {
+            console.log("Aba reativada. Sincronizando o relógio...");
+            // 1. Limpa o timer antigo que pode estar dessincronizado
+            if (clockIntervalId) {
+                clearInterval(clockIntervalId);
+            }
+            // 2. Chama a função principal novamente para buscar a hora fresca e reiniciar o timer
+            iniciarRelogiosSincronizados();
+        }
+    });
     // Inicia todo o processo
     iniciarRelogiosSincronizados();
 });
