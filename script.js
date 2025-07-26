@@ -65,30 +65,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- NOVO: FUNÇÃO PARA BUSCAR HORA UNIVERSAL E INICIAR OS RELÓGIOS ---
     async function iniciarRelogiosSincronizados() {
+    let dataInicial; // Esta variável guardará nossa data de partida
+
+    // --- PLANO A: TENTAR BUSCAR A HORA DA API EM TEMPO REAL ---
+    try {
+        // Vamos tentar a primeira API novamente, que é muito boa e pode funcionar agora
+        const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
+        if (!response.ok) {
+            // Se a resposta não for bem-sucedida (ex: erro 500), força a ida para o catch
+            throw new Error('API primária falhou com status: ' + response.status);
+        }
+        const data = await response.json();
+        dataInicial = new Date(data.utc_datetime);
+        console.log("Sucesso! Usando hora da API em tempo real.");
+
+    } catch (error) {
+        // --- PLANO B: SE A API FALHAR, USAR O ARQUIVO LOCAL COMO FALLBACK ---
+        console.warn("A API em tempo real falhou. Usando o arquivo time.json como Plano B.", error);
         try {
-            // 1. Busca a hora UTC de uma fonte confiável
             const response = await fetch('./time.json');
             const data = await response.json();
-            
-            // 2. Cria um objeto Date com a hora UTC exata, ignorando o relógio local
-            let dataAtualSincronizada = new Date(data.dateTime);
-
-            // 3. Inicia o loop que atualiza os relógios a cada segundo
-            setInterval(() => {
-                // Incrementa o tempo em 1 segundo localmente para evitar chamadas de API constantes
-                dataAtualSincronizada.setSeconds(dataAtualSincronizada.getSeconds() + 1);
-                
-                // Chama a função que atualiza a tela
-                atualizarTelaDeRelogios(dataAtualSincronizada);
-
-            }, 1000);
-
-        } catch (error) {
-            console.error("Erro ao buscar a hora universal:", error);
-            // Mostra uma mensagem de erro se a API falhar
-            elementoRelogio.textContent = "Erro de conexão";
+            dataInicial = new Date(data.dateTime);
+        } catch (fallbackError) {
+            // --- PLANO C: SE ATÉ O ARQUIVO LOCAL FALHAR, MOSTRAR ERRO ---
+            console.error("Falha crítica: não foi possível carregar nem a API nem o time.json.", fallbackError);
+            elementoRelogio.textContent = "Erro de dados";
+            return; // Para a execução completamente
         }
     }
+
+    // --- LÓGICA DO RELÓGIO (INALTERADA) ---
+    // A partir daqui, o código usa a 'dataInicial' que foi obtida com sucesso
+    let dataAtualSincronizada = dataInicial;
+    
+    // Atualiza a tela pela primeira vez imediatamente
+    atualizarTelaDeRelogios(dataAtualSincronizada);
+
+    // Inicia o loop para os próximos segundos
+    setInterval(() => {
+        dataAtualSincronizada.setSeconds(dataAtualSincronizada.getSeconds() + 1);
+        atualizarTelaDeRelogios(dataAtualSincronizada);
+    }, 1000);
+}
 
     // --- NOVO: FUNÇÃO QUE APENAS ATUALIZA A TELA ---
     function atualizarTelaDeRelogios(dataAtual) {
