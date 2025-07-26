@@ -200,50 +200,78 @@ body {
 }
 
 /* --- Estilos do Player de Música Lo-Fi --- */
-.music-player-container {
+.radio-container {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background-color: rgba(0, 0, 0, 0.4);
-    padding: 12px 20px; 
-    border-radius: 50px;
-    display: flex;
-    align-items: center;
-    gap: 18px; 
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    background-color: rgba(18, 18, 18, 0.6);
+    padding: 15px;
+    border-radius: 15px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 100;
+    display: flex;
+    flex-direction: column; /* Empilha os itens verticalmente */
+    gap: 12px;
 }
 
-.music-player-container i {
-    font-size: 22px; 
+.radio-station {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 200px; /* Largura fixa para alinhamento */
+}
+
+.station-title {
+    font-family: 'Roboto', sans-serif;
     color: #E0E0E0;
-    cursor: pointer;
-    transition: color 0.2s;
+    font-size: 1rem;
 }
 
-.music-player-container i:hover {
-    color: #00FFFF;
+.play-btn {
+    font-size: 18px;
+    color: #AAAAAA;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+    padding: 5px; /* Aumenta a área de clique */
+}
+
+.play-btn:hover {
+    color: #FFFFFF;
+}
+
+.play-btn.playing {
+    color: #00FFFF; /* Cor ciano quando está tocando */
+}
+
+.play-btn.playing:hover {
+    transform: scale(1.1);
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #volume-slider {
     -webkit-appearance: none;
     appearance: none;
-    width: 130px;
-    height: 6px; 
+    width: 100%;
+    height: 5px;
     background: #555;
     outline: none;
     border-radius: 3px;
-    transition: opacity 0.2s;
 }
-    
+
 #volume-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    /* Aumentei o tamanho do círculo da barra */
-    width: 16px; 
-    height: 16px; 
+    width: 15px;
+    height: 15px;
     background: #00FFFF;
     cursor: pointer;
     border-radius: 50%;

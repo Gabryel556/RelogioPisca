@@ -16,26 +16,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- LÓGICA DO PLAYER DE MÚSICA ---
-    const lofiPlayer = document.getElementById('lofi-music');
-    const playPauseBtn = document.getElementById('play-pause-btn');
+    const playButtons = document.querySelectorAll('.play-btn');
+    const audioPlayers = document.querySelectorAll('.radio-player');
     const volumeSlider = document.getElementById('volume-slider');
-    let lofiEstavaTocando = false;
-    let clockIntervalId = null;
+    let currentPlayingAudio = null;
+    let audioWasPlayingBeforeAlarm = null;
 
-    playPauseBtn.addEventListener('click', () => {
-        if (lofiPlayer.paused) {
-            lofiPlayer.play();
-            playPauseBtn.classList.remove('fa-play');
-            playPauseBtn.classList.add('fa-pause');
-        } else {
-            lofiPlayer.pause();
-            playPauseBtn.classList.remove('fa-pause');
-            playPauseBtn.classList.add('fa-play');
-        }
+    playButtons.forEach((btn, index) => {
+        btn.addEventListener('click', () => {
+            const audioToPlay = audioPlayers[index];
+
+            if (currentPlayingAudio && currentPlayingAudio === audioToPlay) {
+                // Se clicar no botão da rádio que já está tocando, pausa
+                audioToPlay.pause();
+                currentPlayingAudio = null;
+                btn.classList.remove('fa-pause', 'playing');
+                btn.classList.add('fa-play');
+            } else {
+                // Pausa todas as outras rádios
+                audioPlayers.forEach((player, playerIndex) => {
+                    player.pause();
+                    playButtons[playerIndex].classList.remove('fa-pause', 'playing');
+                    playButtons[playerIndex].classList.add('fa-play');
+                });
+
+                // Toca a rádio selecionada
+                audioToPlay.play();
+                currentPlayingAudio = audioToPlay;
+                btn.classList.remove('fa-play');
+                btn.classList.add('fa-pause', 'playing');
+            }
+        });
     });
 
     volumeSlider.addEventListener('input', (e) => {
-        lofiPlayer.volume = e.target.value;
+        const newVolume = e.target.value;
+        audioPlayers.forEach(player => {
+            player.volume = newVolume;
+        });
     });
 
     // --- LÓGICA DO RELÓGIO E ALARME (VERSÃO ATUALIZADA) ---
