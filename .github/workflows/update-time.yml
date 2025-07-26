@@ -1,0 +1,29 @@
+name: Update Time Data
+
+on:
+  schedule:
+    # Roda no minuto 0 de toda hora (ex: 13:00, 14:00, 15:00)
+    - cron: '0 * * * *'
+  workflow_dispatch: # Permite rodar manualmente pela aba Actions
+
+jobs:
+  update_time_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Update time.json
+        run: |
+          # Busca a hora da API e extrai apenas a data/hora do JSON
+          DATETIME_JSON=$(curl -s https://timeapi.io/api/Time/current/zone?timeZone=Etc/UTC)
+          ISO_DATETIME=$(echo $DATETIME_JSON | jq -r .dateTime)
+
+          # Cria o novo conteúdo do arquivo time.json
+          echo "{\"dateTime\": \"$ISO_DATETIME\"}" > time.json
+
+      - name: Commit and push if changed
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore: update time.json'
+          file_pattern: 'time.json'
