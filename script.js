@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const volumeSlider = document.getElementById('volume-slider');
     let currentPlayingAudio = null;
     let audioWasPlayingBeforeAlarm = null;
+    let authoritativeStartTime = null; // Guardará a hora inicial exata da API
+    let localStartTime = null;       // Guardará quando a página carregou no relógio local
 
     playButtons.forEach((btn, index) => {
         btn.addEventListener('click', () => {
@@ -116,6 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DO RELÓGIO (INALTERADA) ---
     // A partir daqui, o código usa a 'dataInicial' que foi obtida com sucesso
     let dataAtualSincronizada = dataInicial;
+    authoritativeStartTime = dataInicial;
+    localStartTime = Date.now();
     
     // Atualiza a tela pela primeira vez imediatamente
     atualizarTelaDeRelogios(dataAtualSincronizada);
@@ -222,17 +226,32 @@ document.addEventListener('DOMContentLoaded', () => {
         return string.replace(/\b\w/g, char => char.toUpperCase());
     }
     document.addEventListener("visibilitychange", () => {
-    // Se a página NÃO estiver escondida (ou seja, o usuário acabou de voltar)
-        if (!document.hidden) {
-            console.log("Aba reativada. Sincronizando o relógio...");
-            // 1. Limpa o timer antigo que pode estar dessincronizado
-            if (clockIntervalId) {
-                clearInterval(clockIntervalId);
-            }
-            // 2. Chama a função principal novamente para buscar a hora fresca e reiniciar o timer
-            iniciarRelogiosSincronizados();
-        }
-    });
+    if (document.hidden) {
+        // A aba ficou inativa, apenas para o timer antigo
+        clearInterval(clockIntervalId);
+    } else {
+        // A aba voltou a ficar ativa, vamos corrigir a hora
+        console.log("Aba reativada. Corrigindo o relógio...");
+
+        // Se não tivermos um ponto de partida, não faz nada
+        if (!authoritativeStartTime || !localStartTime) return;
+
+        // 1. Calcula quanto tempo (em milissegundos) se passou desde que a página carregou
+        const elapsedMilliseconds = Date.now() - localStartTime;
+
+        // 2. Cria a nova data correta, somando o tempo passado à hora inicial oficial
+        let correctedDate = new Date(authoritativeStartTime.getTime() + elapsedMilliseconds);
+
+        // 3. Reinicia o processo de atualização a partir da data corrigida
+        let dataAtualSincronizada = correctedDate;
+        atualizarTelaDeRelogios(dataAtualSincronizada);
+
+        clockIntervalId = setInterval(() => {
+            dataAtualSincronizada.setSeconds(dataAtualSincronizada.getSeconds() + 1);
+            atualizarTelaDeRelogios(dataAtualSincronizada);
+        }, 1000);
+    }
+});
     // Inicia todo o processo
     iniciarRelogiosSincronizados();
 });
