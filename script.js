@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- LÓGICA DA CENTRAL DE RÁDIOS ---
-    // (Esta parte já está funcionando, então a mantemos como está)
     const playButtons = document.querySelectorAll('.play-btn');
     const audioPlayers = document.querySelectorAll('.radio-player');
     const volumeSlider = document.getElementById('volume-slider');
@@ -54,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         audioPlayers.forEach(player => player.volume = e.target.value);
     });
 
-    // --- LÓGICA DO RELÓGIO E ALARME (VERSÃO FINAL E ROBUSTA) ---
+    // --- LÓGICA DO RELÓGIO E ALARME ---
     const elementoRelogio = document.getElementById('relogio');
     const elementoData = document.getElementById('data');
     const elementoRelogioNoronha = document.getElementById('relogio-noronha');
@@ -81,25 +80,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Função que formata e exibe a hora, e depois torna os relógios visíveis
-    function exibirHorarios(dataParaExibir) {
-        const formatar = (timeZone, opcoes) => new Intl.DateTimeFormat('pt-BR', { timeZone, ...opcoes }).format(dataParaExibir);
+    /**
+     * Esta função recebe a HORA UTC e é a ÚNICA responsável por
+     * formatar e exibir TODOS os horários na tela.
+     * @param {Date} dataUTC - A hora universal correta.
+     */
+    function exibirHorarios(dataUTC) {
+        const formatar = (timeZone, opcoes) => new Intl.DateTimeFormat('pt-BR', { timeZone, ...opcoes }).format(dataUTC);
 
-        // Formata todos os horários primeiro
+        // 1. CALCULA TODOS OS HORÁRIOS BRASILEIROS A PARTIR DA HORA UTC
         const horaBrasilia = formatar('America/Sao_Paulo', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
         const dataBrasilia = capitalizarPrimeiraLetra(formatar('America/Sao_Paulo', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
         const horaNoronha = formatar('America/Noronha', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
         const horaManaus = formatar('America/Manaus', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
         const horaAcre = formatar('America/Rio_Branco', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
-        // Agora, atualiza a tela de uma só vez
+        // 2. ATUALIZA A TELA COM OS VALORES JÁ CONVERTIDOS
         elementoRelogio.textContent = horaBrasilia;
         elementoData.textContent = dataBrasilia;
         elementoRelogioNoronha.textContent = horaNoronha;
         elementoRelogioManaus.textContent = horaManaus;
         elementoRelogioAcre.textContent = horaAcre;
 
-        // E finalmente, torna tudo visível
+        // 3. FINALMENTE, TORNA TUDO VISÍVEL
         elementoRelogio.style.visibility = 'visible';
         elementoRelogio.style.opacity = 1;
         elementoRelogioNoronha.style.visibility = 'visible';
@@ -109,22 +112,25 @@ document.addEventListener('DOMContentLoaded', () => {
         elementoRelogioAcre.style.visibility = 'visible';
         elementoRelogioAcre.style.opacity = 1;
 
+        // Retorna a hora de Brasília para a lógica do alarme
         return horaBrasilia;
     }
 
     async function iniciarRelogiosSincronizados() {
-        let dataInicial;
+        let dataUTC;
         try {
+            // Plano A: Usar a API worldtimeapi.org, que é 100% correta e padrão da indústria.
             const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
             if (!response.ok) throw new Error('API primária falhou');
             const data = await response.json();
-            dataInicial = new Date(data.utc_datetime);
+            dataUTC = new Date(data.utc_datetime);
         } catch (error) {
+            // Plano B: Se a API falhar, usa o nosso arquivo local.
             console.warn("API em tempo real falhou. Usando time.json como Plano B.", error);
             try {
                 const response = await fetch('./time.json');
                 const data = await response.json();
-                dataInicial = new Date(data.dateTime);
+                dataUTC = new Date(data.dateTime);
             } catch (fallbackError) {
                 console.error("Falha crítica ao carregar a hora.", fallbackError);
                 elementoRelogio.textContent = "Erro";
@@ -132,24 +138,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        if (isNaN(dataInicial.getTime())) {
+        if (isNaN(dataUTC.getTime())) {
             console.error("Data obtida é inválida.");
             elementoRelogio.textContent = "Erro";
             return;
         }
 
-        let dataAtualSincronizada = dataInicial;
-        authoritativeStartTime = dataInicial;
+        // Guarda os pontos de partida para a re-sincronização da aba
+        authoritativeStartTime = dataUTC;
         localStartTime = Date.now();
 
-        // Exibe a primeira vez e inicia o loop
-        const horaBrasilia = exibirHorarios(dataAtualSincronizada);
+        // Chama a função para exibir a primeira vez e inicia o loop
+        let horaBrasilia = exibirHorarios(dataUTC);
         verificarAlarmes(horaBrasilia);
 
         clockIntervalId = setInterval(() => {
-            dataAtualSincronizada.setSeconds(dataAtualSincronizada.getSeconds() + 1);
-            const horaAtualBrasilia = exibirHorarios(dataAtualSincronizada);
-            verificarAlarmes(horaAtualBrasilia);
+            dataUTC.setSeconds(dataUTC.getSeconds() + 1);
+            horaBrasilia = exibirHorarios(dataUTC);
+            verificarAlarmes(horaBrasilia);
         }, 1000);
     }
 
@@ -210,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return string.replace(/\b\w/g, char => char.toUpperCase());
     }
 
-    // Lógica de re-sincronização ao voltar para a aba (sem alterações)
+    // Lógica de re-sincronização ao voltar para a aba
     document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
             clearInterval(clockIntervalId);
@@ -218,13 +224,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!authoritativeStartTime || !localStartTime) return;
             const elapsedMilliseconds = Date.now() - localStartTime;
             let correctedDate = new Date(authoritativeStartTime.getTime() + elapsedMilliseconds);
-            let dataAtualSincronizada = correctedDate;
-            const horaBrasilia = exibirHorarios(dataAtualSincronizada);
+            let horaBrasilia = exibirHorarios(correctedDate);
             verificarAlarmes(horaBrasilia);
             clockIntervalId = setInterval(() => {
-                dataAtualSincronizada.setSeconds(dataAtualSincronizada.getSeconds() + 1);
-                const horaAtualBrasilia = exibirHorarios(dataAtualSincronizada);
-                verificarAlarmes(horaAtualBrasilia);
+                correctedDate.setSeconds(correctedDate.getSeconds() + 1);
+                horaBrasilia = exibirHorarios(correctedDate);
+                verificarAlarmes(horaBrasilia);
             }, 1000);
         }
     });
