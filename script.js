@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const elementoRelogioNoronha = document.getElementById('relogio-noronha');
     const elementoRelogioManaus = document.getElementById('relogio-manaus');
     const elementoRelogioAcre = document.getElementById('relogio-acre');
-    const elementoRelogioUtc = document.getElementById('relogio-UTC'); // <-- LINHA ADICIONADA
+    const elementoRelogioUtc = document.getElementById('relogio-UTC');
     const elementoPreAlarmeSom = document.getElementById('pre-alarme-som');
     const elementoAlarmePrincipalSom = document.getElementById('alarme-principal-som');
     const elementoAlarmeGif = document.getElementById('alarme-gif');
@@ -70,6 +70,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let clockIntervalId = null;
     let authoritativeStartTime = null;
     let localStartTime = null;
+    
+    // --- NOVO: CRIAMOS OS FORMATADORES UMA ÚNICA VEZ ---
+    const opcoesHora = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    const formatadorBrasilia = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', ...opcoesHora });
+    const formatadorDataBrasilia = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const formatadorNoronha = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Noronha', ...opcoesHora });
+    const formatadorManaus = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Manaus', ...opcoesHora });
+    const formatadorAcre = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Rio_Branco', ...opcoesHora });
+    const formatadorUtc = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC', ...opcoesHora });
+
 
     muteButton.addEventListener('click', () => {
         isMuted = !isMuted;
@@ -81,56 +91,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    /**
-     * Esta função recebe a HORA UTC e é a ÚNICA responsável por
-     * formatar e exibir TODOS os horários na tela.
-     * @param {Date} dataUTC - A hora universal correta.
-     */
     function exibirHorarios(dataUTC) {
-    const formatar = (timeZone, opcoes) => new Intl.DateTimeFormat('pt-BR', { timeZone, ...opcoes }).format(dataUTC);
+        // Apenas usamos os formatadores que já foram criados
+        const horaBrasilia = formatadorBrasilia.format(dataUTC);
+        
+        elementoRelogio.textContent = horaBrasilia;
+        elementoData.textContent = capitalizarPrimeiraLetra(formatadorDataBrasilia.format(dataUTC));
+        elementoRelogioNoronha.textContent = formatadorNoronha.format(dataUTC);
+        elementoRelogioManaus.textContent = formatadorManaus.format(dataUTC);
+        elementoRelogioAcre.textContent = formatadorAcre.format(dataUTC);
+        elementoRelogioUtc.textContent = formatadorUtc.format(dataUTC);
 
-    // 1. CALCULA TODOS OS HORÁRIOS A PARTIR DA HORA UTC
-    const horaBrasilia = formatar('America/Sao_Paulo', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    const dataBrasilia = capitalizarPrimeiraLetra(formatar('America/Sao_Paulo', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
-    const horaNoronha = formatar('America/Noronha', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    const horaManaus = formatar('America/Manaus', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    const horaAcre = formatar('America/Rio_Branco', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-    const horaUtc = formatar('UTC', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); // <-- LINHA ADICIONADA
+        // Torna tudo visível
+        [elementoRelogio, elementoRelogioNoronha, elementoRelogioManaus, elementoRelogioAcre, elementoRelogioUtc].forEach(el => {
+            el.style.visibility = 'visible';
+            el.style.opacity = 1;
+        });
 
-    // 2. ATUALIZA A TELA COM OS VALORES JÁ CONVERTIDOS
-    elementoRelogio.textContent = horaBrasilia;
-    elementoData.textContent = dataBrasilia;
-    elementoRelogioNoronha.textContent = horaNoronha;
-    elementoRelogioManaus.textContent = horaManaus;
-    elementoRelogioAcre.textContent = horaAcre;
-    elementoRelogioUtc.textContent = horaUtc; // <-- LINHA ADICIONADA
-
-    // 3. FINALMENTE, TORNA TUDO VISÍVEL
-    elementoRelogio.style.visibility = 'visible';
-    elementoRelogio.style.opacity = 1;
-    elementoRelogioNoronha.style.visibility = 'visible';
-    elementoRelogioNoronha.style.opacity = 1;
-    elementoRelogioManaus.style.visibility = 'visible';
-    elementoRelogioManaus.style.opacity = 1;
-    elementoRelogioAcre.style.visibility = 'visible';
-    elementoRelogioAcre.style.opacity = 1;
-    elementoRelogioUtc.style.visibility = 'visible'; // <-- LINHA ADICIONADA
-    elementoRelogioUtc.style.opacity = 1;           // <-- LINHA ADICIONADA
-
-    // Retorna a hora de Brasília para a lógica do alarme
-    return horaBrasilia;
-}
+        return horaBrasilia;
+    }
 
     async function iniciarRelogiosSincronizados() {
         let dataUTC;
         try {
-            // Plano A: Usar a API worldtimeapi.org, que é 100% correta e padrão da indústria.
             const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
             if (!response.ok) throw new Error('API primária falhou');
             const data = await response.json();
             dataUTC = new Date(data.utc_datetime);
         } catch (error) {
-            // Plano B: Se a API falhar, usa o nosso arquivo local.
             console.warn("API em tempo real falhou. Usando time.json como Plano B.", error);
             try {
                 const response = await fetch('./time.json');
@@ -149,11 +137,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Guarda os pontos de partida para a re-sincronização da aba
         authoritativeStartTime = dataUTC;
         localStartTime = Date.now();
 
-        // Chama a função para exibir a primeira vez e inicia o loop
         let horaBrasilia = exibirHorarios(dataUTC);
         verificarAlarmes(horaBrasilia);
 
@@ -239,6 +225,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Inicia todo o processo
     iniciarRelogiosSincronizados();
 });
