@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Página carregada. Iniciando script.");
 
     // --- LÓGICA DE NAVEGAÇÃO E RÁDIOS (INALTERADA) ---
     const navItems = document.querySelectorAll('.sidebar ul li');
@@ -45,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     volumeSlider.addEventListener('input', (e) => { audioPlayers.forEach(player => player.volume = e.target.value); });
 
-    // --- LÓGICA DO RELÓGIO E ALARME ---
+    // --- LÓGICA DO RELÓGIO E ALARME (VERSÃO FINAL E OTIMIZADA) ---
     const elementoRelogio = document.getElementById('relogio');
     const elementoData = document.getElementById('data');
     const elementoRelogioNoronha = document.getElementById('relogio-noronha');
@@ -82,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function exibirHorarios(dataUTC) {
-        console.log("Passo 4: Formatando e exibindo os horários.");
         const horaBrasilia = formatadorBrasilia.format(dataUTC);
         elementoRelogio.textContent = horaBrasilia;
         elementoData.textContent = capitalizarPrimeiraLetra(formatadorDataBrasilia.format(dataUTC));
@@ -90,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
         elementoRelogioManaus.textContent = formatadorManaus.format(dataUTC);
         elementoRelogioAcre.textContent = formatadorAcre.format(dataUTC);
         elementoRelogioUtc.textContent = formatadorUtc.format(dataUTC);
-
         [elementoRelogio, elementoRelogioNoronha, elementoRelogioManaus, elementoRelogioAcre, elementoRelogioUtc].forEach(el => {
             el.style.visibility = 'visible';
             el.style.opacity = 1;
@@ -98,63 +95,74 @@ document.addEventListener('DOMContentLoaded', () => {
         return horaBrasilia;
     }
 
-    async function iniciarRelogiosSincronizados() {
-        console.log("Passo 1: Tentando buscar hora da API.");
+    // Função que inicia o loop de atualização a partir de uma data
+    function iniciarLoopDoRelogio(dataDePartida) {
+        let dataAtualSincronizada = dataDePartida;
+        const horaBrasilia = exibirHorarios(dataAtualSincronizada);
+        verificarAlarmes(horaBrasilia);
+
+        if (clockIntervalId) clearInterval(clockIntervalId);
+        clockIntervalId = setInterval(() => {
+            dataAtualSincronizada.setSeconds(dataAtualSincronizada.getSeconds() + 1);
+            const horaAtualBrasilia = exibirHorarios(dataAtualSincronizada);
+            verificarAlarmes(horaAtualBrasilia);
+        }, 1000);
+    }
+
+    async function sincronizacaoInicial() {
         let dataUTC;
         try {
             const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
             if (!response.ok) throw new Error('API primária falhou');
             const data = await response.json();
-            console.log("API retornou:", data);
-            
-            if (!data.unixtime) {
-                throw new Error("API não retornou o 'unixtime'.");
-            }
-            
             dataUTC = new Date(data.unixtime * 1000);
-            console.log("Passo 2: Hora da API convertida para objeto Date:", dataUTC);
-
         } catch (error) {
             console.warn("API falhou. Usando time.json como Plano B.", error);
             try {
                 const response = await fetch('./time.json');
                 const data = await response.json();
-                console.log("time.json retornou:", data);
-
-                if (!data.unixtime) {
-                    throw new Error("time.json não contém 'unixtime'.");
-                }
-                
                 dataUTC = new Date(data.unixtime * 1000);
-                console.log("Passo 2 (Fallback): Hora do time.json convertida para objeto Date:", dataUTC);
             } catch (fallbackError) {
                 console.error("Falha crítica ao carregar a hora.", fallbackError);
-                elementoRelogio.textContent = "Erro de dados"; return;
+                elementoRelogio.textContent = "Erro de Dados"; return;
             }
         }
         
         if (isNaN(dataUTC.getTime())) {
             console.error("Data obtida é inválida.");
-            elementoRelogio.textContent = "Data inválida"; return;
+            elementoRelogio.textContent = "Data Inválida"; return;
         }
         
-        console.log("Passo 3: Hora sincronizada com sucesso. Iniciando relógio.");
+        // Guarda os pontos de partida para a re-sincronização
         authoritativeStartTime = dataUTC;
         localStartTime = Date.now();
         
-        let horaBrasilia = exibirHorarios(dataUTC);
-        verificarAlarmes(horaBrasilia);
-
-        if (clockIntervalId) clearInterval(clockIntervalId);
-        clockIntervalId = setInterval(() => {
-            // Recalcula a data a cada segundo para máxima precisão ao voltar para a aba
-            const elapsed = Date.now() - localStartTime;
-            let dataAtualSincronizada = new Date(authoritativeStartTime.getTime() + elapsed);
-            
-            horaBrasilia = exibirHorarios(dataAtualSincronizada);
-            verificarAlarmes(horaBrasilia);
-        }, 1000);
+        // Inicia o relógio pela primeira vez
+        iniciarLoopDoRelogio(authoritativeStartTime);
     }
+
+    // Lógica de re-sincronização MATEMÁTICA ao voltar para a aba
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            // Quando a aba fica inativa, apenas limpa o timer para economizar recursos.
+            clearInterval(clockIntervalId);
+        } else {
+            // Quando a aba volta, recalcula e reinicia, SEM CHAMADA DE REDE.
+            if (!authoritativeStartTime || !localStartTime) return; // Proteção
+
+            // 1. Calcula quanto tempo (ms) se passou desde o carregamento inicial
+            const elapsedMilliseconds = Date.now() - localStartTime;
+            
+            // 2. Cria a nova data correta, somando o tempo passado à hora inicial oficial
+            const correctedDate = new Date(authoritativeStartTime.getTime() + elapsedMilliseconds);
+
+            // 3. Reinicia o loop do relógio a partir do tempo corrigido
+            iniciarLoopDoRelogio(correctedDate);
+        }
+    });
+
+    // Inicia todo o processo
+    sincronizacaoInicial();
 
     // Funções de alarme e auxiliares (sem alterações)
     function verificarAlarmes(hora) {
@@ -186,16 +194,4 @@ document.addEventListener('DOMContentLoaded', () => {
     function capitalizarPrimeiraLetra(string) {
         return string.replace(/\b\w/g, char => char.toUpperCase());
     }
-
-    // Lógica de re-sincronização ao voltar para a aba (RESTAURADA E MELHORADA)
-    document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-            console.log("Aba reativada. Reiniciando sincronização.");
-            iniciarRelogiosSincronizados();
-        } else {
-            clearInterval(clockIntervalId);
-        }
-    });
-
-    iniciarRelogiosSincronizados();
 });
