@@ -2,11 +2,9 @@ name: Update Time Data
 
 on:
   schedule:
-    # Roda no minuto 0 de toda hora (ex: 13:00, 14:00, 15:00)
-    - cron: '0 * * * *'
-  workflow_dispatch: # Permite rodar manualmente pela aba Actions
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
 
-# ADICIONADO: Bloco que concede permissão para o robô escrever no repositório
 permissions:
   contents: write
 
@@ -19,12 +17,15 @@ jobs:
 
       - name: Update time.json
         run: |
-          # Busca a hora da API e extrai apenas a data/hora do JSON
-          DATETIME_JSON=$(curl -s https://timeapi.io/api/Time/current/zone?timeZone=Etc/UTC)
-          ISO_DATETIME=$(echo $DATETIME_JSON | jq -r .dateTime)
+          # Busca a resposta completa da API
+          API_RESPONSE=$(curl -s https://worldtimeapi.org/api/timezone/Etc/UTC)
           
-          # Cria o novo conteúdo do arquivo time.json
-          echo "{\"dateTime\": \"$ISO_DATETIME\"}" > time.json
+          # Extrai os dois valores que precisamos
+          ISO_DATETIME=$(echo $API_RESPONSE | jq -r .utc_datetime)
+          UNIX_TIME=$(echo $API_RESPONSE | jq -r .unixtime)
+          
+          # Cria o novo arquivo time.json com ambos os formatos
+          echo "{\"dateTime\": \"$ISO_DATETIME\", \"unixtime\": $UNIX_TIME}" > time.json
 
       - name: Commit and push if changed
         uses: stefanzweifel/git-auto-commit-action@v5
