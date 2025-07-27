@@ -3,76 +3,73 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE NAVEGAÇÃO DAS ABAS ---
     const navItems = document.querySelectorAll('.sidebar ul li');
     const pages = document.querySelectorAll('.page');
-
     navItems.forEach(item => {
         item.addEventListener('mouseover', () => {
             navItems.forEach(nav => nav.classList.remove('active'));
             pages.forEach(page => page.classList.remove('active'));
-
             item.classList.add('active');
             const targetId = item.getAttribute('data-target') + '-section';
             document.getElementById(targetId).classList.add('active');
         });
     });
 
-    // --- LÓGICA DO PLAYER DE MÚSICA ---
+    // --- LÓGICA DA CENTRAL DE RÁDIOS ---
+    // (Esta parte já está funcionando, então a mantemos como está)
     const playButtons = document.querySelectorAll('.play-btn');
     const audioPlayers = document.querySelectorAll('.radio-player');
     const volumeSlider = document.getElementById('volume-slider');
     let currentPlayingAudio = null;
     let audioWasPlayingBeforeAlarm = null;
-    let authoritativeStartTime = null; // Guardará a hora inicial exata da API
-    let localStartTime = null;       // Guardará quando a página carregou no relógio local
 
     playButtons.forEach((btn, index) => {
         btn.addEventListener('click', () => {
             const audioToPlay = audioPlayers[index];
-
             if (currentPlayingAudio && currentPlayingAudio === audioToPlay) {
-                // Se clicar no botão da rádio que já está tocando, pausa
                 audioToPlay.pause();
                 currentPlayingAudio = null;
                 btn.classList.remove('fa-pause', 'playing');
                 btn.classList.add('fa-play');
             } else {
-                // Pausa todas as outras rádios
                 audioPlayers.forEach((player, playerIndex) => {
                     player.pause();
                     playButtons[playerIndex].classList.remove('fa-pause', 'playing');
                     playButtons[playerIndex].classList.add('fa-play');
                 });
-
-                // Toca a rádio selecionada
-                audioToPlay.play();
-                currentPlayingAudio = audioToPlay;
-                btn.classList.remove('fa-play');
-                btn.classList.add('fa-pause', 'playing');
+                const playPromise = audioToPlay.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        currentPlayingAudio = audioToPlay;
+                        btn.classList.remove('fa-play');
+                        btn.classList.add('fa-pause', 'playing');
+                    }).catch(error => {
+                        console.error("Erro ao tocar a rádio:", error);
+                        currentPlayingAudio = null;
+                    });
+                }
             }
         });
     });
 
     volumeSlider.addEventListener('input', (e) => {
-        const newVolume = e.target.value;
-        audioPlayers.forEach(player => {
-            player.volume = newVolume;
-        });
+        audioPlayers.forEach(player => player.volume = e.target.value);
     });
 
-    // --- LÓGICA DO RELÓGIO E ALARME (VERSÃO ATUALIZADA) ---
+    // --- LÓGICA DO RELÓGIO E ALARME (VERSÃO FINAL E ROBUSTA) ---
     const elementoRelogio = document.getElementById('relogio');
     const elementoData = document.getElementById('data');
     const elementoRelogioNoronha = document.getElementById('relogio-noronha');
     const elementoRelogioManaus = document.getElementById('relogio-manaus');
     const elementoRelogioAcre = document.getElementById('relogio-acre');
-
     const elementoPreAlarmeSom = document.getElementById('pre-alarme-som');
     const elementoAlarmePrincipalSom = document.getElementById('alarme-principal-som');
     const elementoAlarmeGif = document.getElementById('alarme-gif');
     const muteButton = document.getElementById('mute-button');
-
     let preAlarmeTocou = false;
     let alarmePrincipalTocouHoje = false;
     let isMuted = false;
+    let clockIntervalId = null;
+    let authoritativeStartTime = null;
+    let localStartTime = null;
 
     muteButton.addEventListener('click', () => {
         isMuted = !isMuted;
@@ -84,92 +81,79 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- NOVO: FUNÇÃO PARA BUSCAR HORA UNIVERSAL E INICIAR OS RELÓGIOS ---
+    // Função que formata e exibe a hora, e depois torna os relógios visíveis
+    function exibirHorarios(dataParaExibir) {
+        const formatar = (timeZone, opcoes) => new Intl.DateTimeFormat('pt-BR', { timeZone, ...opcoes }).format(dataParaExibir);
+
+        // Formata todos os horários primeiro
+        const horaBrasilia = formatar('America/Sao_Paulo', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        const dataBrasilia = capitalizarPrimeiraLetra(formatar('America/Sao_Paulo', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+        const horaNoronha = formatar('America/Noronha', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        const horaManaus = formatar('America/Manaus', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        const horaAcre = formatar('America/Rio_Branco', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+        // Agora, atualiza a tela de uma só vez
+        elementoRelogio.textContent = horaBrasilia;
+        elementoData.textContent = dataBrasilia;
+        elementoRelogioNoronha.textContent = horaNoronha;
+        elementoRelogioManaus.textContent = horaManaus;
+        elementoRelogioAcre.textContent = horaAcre;
+
+        // E finalmente, torna tudo visível
+        elementoRelogio.style.visibility = 'visible';
+        elementoRelogio.style.opacity = 1;
+        elementoRelogioNoronha.style.visibility = 'visible';
+        elementoRelogioNoronha.style.opacity = 1;
+        elementoRelogioManaus.style.visibility = 'visible';
+        elementoRelogioManaus.style.opacity = 1;
+        elementoRelogioAcre.style.visibility = 'visible';
+        elementoRelogioAcre.style.opacity = 1;
+
+        return horaBrasilia;
+    }
+
     async function iniciarRelogiosSincronizados() {
-    let dataInicial;
-
-    // --- PLANO A: TENTAR A NOVA API, MAIS LEVE E DIRETA ---
-    try {
-        // Esta API retorna apenas o texto da data, nada mais.
-        const response = await fetch('https://www.timeapi.org/utc/now');
-        if (!response.ok) {
-            throw new Error('API primária (timeapi.org) falhou com status: ' + response.status);
-        }
-        // Usamos .text() pois a resposta não é JSON
-        const dataTexto = await response.text();
-        dataInicial = new Date(dataTexto);
-        console.log("Sucesso! Usando hora da API em tempo real (timeapi.org).");
-
-    } catch (error) {
-        // --- PLANO B: SE A API FALHAR, USAR O ARQUIVO LOCAL COMO FALLBACK ---
-        console.warn("A API em tempo real falhou. Usando o arquivo time.json como Plano B.", error);
+        let dataInicial;
         try {
-            const response = await fetch('./time.json');
+            const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
+            if (!response.ok) throw new Error('API primária falhou');
             const data = await response.json();
-            dataInicial = new Date(data.dateTime);
-        } catch (fallbackError) {
-            // --- PLANO C: SE TUDO FALHAR, MOSTRAR ERRO ---
-            console.error("Falha crítica: não foi possível carregar nem a API nem o time.json.", fallbackError);
+            dataInicial = new Date(data.utc_datetime);
+        } catch (error) {
+            console.warn("API em tempo real falhou. Usando time.json como Plano B.", error);
+            try {
+                const response = await fetch('./time.json');
+                const data = await response.json();
+                dataInicial = new Date(data.dateTime);
+            } catch (fallbackError) {
+                console.error("Falha crítica ao carregar a hora.", fallbackError);
+                elementoRelogio.textContent = "Erro";
+                return;
+            }
+        }
+        
+        if (isNaN(dataInicial.getTime())) {
+            console.error("Data obtida é inválida.");
             elementoRelogio.textContent = "Erro";
-            // Para os outros relógios também
-            elementoRelogioNoronha.textContent = "Erro";
-            elementoRelogioManaus.textContent = "Erro";
-            elementoRelogioAcre.textContent = "Erro";
             return;
         }
-    }
 
-    // Se a data obtida for inválida por algum motivo, para a execução.
-    if (isNaN(dataInicial.getTime())) {
-        console.error("A data obtida é inválida.");
-        elementoRelogio.textContent = "Data inválida";
-        return;
-    }
+        let dataAtualSincronizada = dataInicial;
+        authoritativeStartTime = dataInicial;
+        localStartTime = Date.now();
 
-    // --- LÓGICA DO RELÓGIO (INALTERADA) ---
-    let dataAtualSincronizada = dataInicial;
-    
-    atualizarTelaDeRelogios(dataAtualSincronizada);
-
-    clockIntervalId = setInterval(() => {
-        dataAtualSincronizada.setSeconds(dataAtualSincronizada.getSeconds() + 1);
-        atualizarTelaDeRelogios(dataAtualSincronizada);
-    }, 1000);
-}
-
-    // --- NOVO: FUNÇÃO QUE APENAS ATUALIZA A TELA ---
-    function atualizarTelaDeRelogios(dataAtual) {
-        const formatarEAtualizar = (timeZone, elementoRelogio, elementoData = null) => {
-            const opcoesHora = { timeZone, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-            const formatadorHora = new Intl.DateTimeFormat('pt-BR', opcoesHora);
-            const horaFormatada = formatadorHora.format(dataAtual);
-            elementoRelogio.textContent = horaFormatada;
-
-            if (elementoData) {
-                const opcoesData = { timeZone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                const formatadorData = new Intl.DateTimeFormat('pt-BR', opcoesData);
-                elementoData.textContent = capitalizarPrimeiraLetra(formatadorData.format(dataAtual));
-            }
-            return horaFormatada;
-        };
-
-        const horaBrasilia = formatarEAtualizar('America/Sao_Paulo', elementoRelogio, elementoData);
-        formatarEAtualizar('America/Noronha', elementoRelogioNoronha);
-        formatarEAtualizar('America/Manaus', elementoRelogioManaus);
-        formatarEAtualizar('America/Rio_Branco', elementoRelogioAcre);
-
-        // --- ADICIONE ESTE BLOCO NO FINAL DA FUNÇÃO ---
-        // Torna os relógios visíveis após a primeira atualização
-        elementoRelogio.style.opacity = 1;
-        elementoRelogioNoronha.style.opacity = 1;
-        elementoRelogioManaus.style.opacity = 1;
-        elementoRelogioAcre.style.opacity = 1;
-        // ---------------------------------------------
-
+        // Exibe a primeira vez e inicia o loop
+        const horaBrasilia = exibirHorarios(dataAtualSincronizada);
         verificarAlarmes(horaBrasilia);
+
+        clockIntervalId = setInterval(() => {
+            dataAtualSincronizada.setSeconds(dataAtualSincronizada.getSeconds() + 1);
+            const horaAtualBrasilia = exibirHorarios(dataAtualSincronizada);
+            verificarAlarmes(horaAtualBrasilia);
+        }, 1000);
     }
 
-    // As funções de alarme e auxiliares permanecem as mesmas
+    // Funções de alarme e auxiliares (sem alterações)
     function verificarAlarmes(hora) {
         if (isMuted) return;
         const [horas, minutos, segundos] = hora.split(':');
@@ -187,32 +171,27 @@ document.addEventListener('DOMContentLoaded', () => {
             alarmePrincipalTocouHoje = false;
         }
     }
-
     function tocarPreAlarme() {
         if (isMuted) return;
-        if (!lofiPlayer.paused) {
-            lofiEstavaTocando = true;
-            lofiPlayer.pause();
+        if (currentPlayingAudio) {
+            audioWasPlayingBeforeAlarm = currentPlayingAudio;
+            currentPlayingAudio.pause();
         } else {
-            lofiEstavaTocando = false;
+            audioWasPlayingBeforeAlarm = null;
         }
-        console.log("PRÉ-ALARME! Faltam 10 segundos para a meia-noite!");
         elementoPreAlarmeSom.currentTime = 0;
         elementoPreAlarmeSom.play();
     }
-
     function pararPreAlarme() {
         elementoPreAlarmeSom.pause();
         elementoPreAlarmeSom.currentTime = 0;
     }
-
     function tocarAlarmePrincipal() {
         if (isMuted) return;
-        if (!lofiPlayer.paused) {
-            lofiEstavaTocando = true;
-            lofiPlayer.pause();
+        if (currentPlayingAudio && !audioWasPlayingBeforeAlarm) {
+            audioWasPlayingBeforeAlarm = currentPlayingAudio;
+            currentPlayingAudio.pause();
         }
-        console.log("ALARME! É meia-noite!");
         elementoAlarmeGif.style.display = 'block';
         elementoAlarmePrincipalSom.currentTime = 0;
         elementoAlarmePrincipalSom.loop = true;
@@ -222,42 +201,34 @@ document.addEventListener('DOMContentLoaded', () => {
             elementoAlarmePrincipalSom.pause();
             elementoAlarmePrincipalSom.currentTime = 0;
             elementoAlarmePrincipalSom.loop = false;
-            if (lofiEstavaTocando) {
-                lofiPlayer.play();
+            if (audioWasPlayingBeforeAlarm) {
+                audioWasPlayingBeforeAlarm.play();
             }
         }, 10000);
     }
-
     function capitalizarPrimeiraLetra(string) {
         return string.replace(/\b\w/g, char => char.toUpperCase());
     }
+
+    // Lógica de re-sincronização ao voltar para a aba (sem alterações)
     document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-        // A aba ficou inativa, apenas para o timer antigo
-        clearInterval(clockIntervalId);
-    } else {
-        // A aba voltou a ficar ativa, vamos corrigir a hora
-        console.log("Aba reativada. Corrigindo o relógio...");
+        if (document.hidden) {
+            clearInterval(clockIntervalId);
+        } else {
+            if (!authoritativeStartTime || !localStartTime) return;
+            const elapsedMilliseconds = Date.now() - localStartTime;
+            let correctedDate = new Date(authoritativeStartTime.getTime() + elapsedMilliseconds);
+            let dataAtualSincronizada = correctedDate;
+            const horaBrasilia = exibirHorarios(dataAtualSincronizada);
+            verificarAlarmes(horaBrasilia);
+            clockIntervalId = setInterval(() => {
+                dataAtualSincronizada.setSeconds(dataAtualSincronizada.getSeconds() + 1);
+                const horaAtualBrasilia = exibirHorarios(dataAtualSincronizada);
+                verificarAlarmes(horaAtualBrasilia);
+            }, 1000);
+        }
+    });
 
-        // Se não tivermos um ponto de partida, não faz nada
-        if (!authoritativeStartTime || !localStartTime) return;
-
-        // 1. Calcula quanto tempo (em milissegundos) se passou desde que a página carregou
-        const elapsedMilliseconds = Date.now() - localStartTime;
-
-        // 2. Cria a nova data correta, somando o tempo passado à hora inicial oficial
-        let correctedDate = new Date(authoritativeStartTime.getTime() + elapsedMilliseconds);
-
-        // 3. Reinicia o processo de atualização a partir da data corrigida
-        let dataAtualSincronizada = correctedDate;
-        atualizarTelaDeRelogios(dataAtualSincronizada);
-
-        clockIntervalId = setInterval(() => {
-            dataAtualSincronizada.setSeconds(dataAtualSincronizada.getSeconds() + 1);
-            atualizarTelaDeRelogios(dataAtualSincronizada);
-        }, 1000);
-    }
-});
     // Inicia todo o processo
     iniciarRelogiosSincronizados();
 });
