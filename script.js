@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- LÓGICA DE NAVEGAÇÃO DAS ABAS ---
-    // (Esta parte está funcionando, permanece igual)
+    // --- LÓGICA DE NAVEGAÇÃO E RÁDIOS (INALTERADA) ---
     const navItems = document.querySelectorAll('.sidebar ul li');
     const pages = document.querySelectorAll('.page');
     navItems.forEach(item => {
@@ -13,15 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(targetId).classList.add('active');
         });
     });
-
-    // --- LÓGICA DA CENTRAL DE RÁDIOS ---
-    // (Esta parte está funcionando, permanece igual)
     const playButtons = document.querySelectorAll('.play-btn');
     const audioPlayers = document.querySelectorAll('.radio-player');
     const volumeSlider = document.getElementById('volume-slider');
     let currentPlayingAudio = null;
     let audioWasPlayingBeforeAlarm = null;
-
     playButtons.forEach((btn, index) => {
         btn.addEventListener('click', () => {
             const audioToPlay = audioPlayers[index];
@@ -49,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     volumeSlider.addEventListener('input', (e) => { audioPlayers.forEach(player => player.volume = e.target.value); });
 
-    // --- LÓGICA DO RELÓGIO E ALARME (VERSÃO FINAL COM CÁLCULO MANUAL) ---
+    // --- LÓGICA DO RELÓGIO E ALARME (VERSÃO FINAL COM UNIX TIMESTAMP) ---
     const elementoRelogio = document.getElementById('relogio');
     const elementoData = document.getElementById('data');
     const elementoRelogioNoronha = document.getElementById('relogio-noronha');
@@ -64,6 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let alarmePrincipalTocouHoje = false;
     let isMuted = false;
     let clockIntervalId = null;
+    
+    // Formatadores de data, criados uma única vez para performance
+    const opcoesHora = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    const formatadorBrasilia = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', ...opcoesHora });
+    const formatadorDataBrasilia = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const formatadorNoronha = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Noronha', ...opcoesHora });
+    const formatadorManaus = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Manaus', ...opcoesHora });
+    const formatadorAcre = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Rio_Branco', ...opcoesHora });
+    const formatadorUtc = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC', ...opcoesHora });
 
     muteButton.addEventListener('click', () => {
         isMuted = !isMuted;
@@ -75,57 +79,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Função auxiliar para garantir que os números tenham sempre 2 dígitos (ex: 7 -> "07")
-    const formatarNumero = (num) => num.toString().padStart(2, '0');
-
-    /**
-     * Esta é a nova função principal. Ela recebe a HORA UTC e faz a matemática.
-     * @param {Date} dataUTC - A hora universal correta.
-     */
     function exibirHorarios(dataUTC) {
-        // 1. EXTRAI OS COMPONENTES DA HORA UNIVERSAL
-        const horasUTC = dataUTC.getUTCHours();
-        const minutosUTC = dataUTC.getUTCMinutes();
-        const segundosUTC = dataUTC.getUTCSeconds();
+        const horaBrasilia = formatadorBrasilia.format(dataUTC);
         
-        // Formata os minutos e segundos uma vez, pois são iguais para todos
-        const minutosFormatados = formatarNumero(minutosUTC);
-        const segundosFormatados = formatarNumero(segundosUTC);
+        // A lógica de exibição, que já estava correta, permanece
+        elementoRelogio.textContent = horaBrasilia;
+        elementoData.textContent = capitalizarPrimeiraLetra(formatadorDataBrasilia.format(dataUTC));
+        elementoRelogioNoronha.textContent = formatadorNoronha.format(dataUTC);
+        elementoRelogioManaus.textContent = formatadorManaus.format(dataUTC);
+        elementoRelogioAcre.textContent = formatadorAcre.format(dataUTC);
+        elementoRelogioUtc.textContent = formatadorUtc.format(dataUTC);
 
-        // 2. ATUALIZA PRIMEIRO O RELÓGIO UTC, como você pediu
-        const horaUtcFormatada = `${formatarNumero(horasUTC)}:${minutosFormatados}:${segundosFormatados}`;
-        elementoRelogioUtc.textContent = horaUtcFormatada;
-
-        // 3. CALCULA MANUALMENTE CADA FUSO HORÁRIO A PARTIR DO UTC
-        // A fórmula (horasUTC - offset + 24) % 24 garante que a hora "vire" corretamente na meia-noite
-        const horaNoronha = formatarNumero((horasUTC - 2 + 24) % 24);
-        const horaBrasilia = formatarNumero((horasUTC - 3 + 24) % 24);
-        const horaManaus = formatarNumero((horasUTC - 4 + 24) % 24);
-        const horaAcre = formatarNumero((horasUTC - 5 + 24) % 24);
-
-        // Monta as strings de tempo para cada fuso
-        const horaNoronhaFormatada = `${horaNoronha}:${minutosFormatados}:${segundosFormatados}`;
-        const horaBrasiliaFormatada = `${horaBrasilia}:${minutosFormatados}:${segundosFormatados}`;
-        const horaManausFormatada = `${horaManaus}:${minutosFormatados}:${segundosFormatados}`;
-        const horaAcreFormatada = `${horaAcre}:${minutosFormatados}:${segundosFormatados}`;
-        
-        // 4. ATUALIZA OS OUTROS RELÓGIOS NA TELA
-        elementoRelogio.textContent = horaBrasiliaFormatada;
-        elementoRelogioNoronha.textContent = horaNoronhaFormatada;
-        elementoRelogioManaus.textContent = horaManausFormatada;
-        elementoRelogioAcre.textContent = horaAcreFormatada;
-        
-        // Atualiza a data (ainda podemos usar Intl para isso, é confiável)
-        const opcoesData = { timeZone: 'America/Sao_Paulo', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        elementoData.textContent = capitalizarPrimeiraLetra(new Intl.DateTimeFormat('pt-BR', opcoesData).format(dataUTC));
-
-        // 5. FINALMENTE, TORNA TUDO VISÍVEL
         [elementoRelogio, elementoRelogioNoronha, elementoRelogioManaus, elementoRelogioAcre, elementoRelogioUtc].forEach(el => {
             el.style.visibility = 'visible';
             el.style.opacity = 1;
         });
 
-        return horaBrasiliaFormatada; // Para a lógica do alarme
+        return horaBrasilia;
     }
 
     async function iniciarRelogiosSincronizados() {
@@ -134,13 +104,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
             if (!response.ok) throw new Error('API primária falhou');
             const data = await response.json();
-            dataUTC = new Date(data.utc_datetime);
+            // PONTO CRÍTICO: Criamos a data a partir do NÚMERO (unixtime), não do texto!
+            dataUTC = new Date(data.unixtime * 1000);
         } catch (error) {
             console.warn("API falhou. Usando time.json como Plano B.", error);
             try {
                 const response = await fetch('./time.json');
                 const data = await response.json();
-                dataUTC = new Date(data.dateTime);
+                // O Plano B também usa o unixtime, que o robô agora salva
+                dataUTC = new Date(data.unixtime * 1000);
             } catch (fallbackError) {
                 console.error("Falha crítica ao carregar a hora.", fallbackError);
                 elementoRelogio.textContent = "Erro"; return;
@@ -151,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Data obtida é inválida.");
             elementoRelogio.textContent = "Erro"; return;
         }
-
+        
         let horaBrasilia = exibirHorarios(dataUTC);
         verificarAlarmes(horaBrasilia);
 
@@ -162,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
-    // Funções de alarme e auxiliares (sem alterações)
+    // O restante das funções (alarme, etc.) não precisa de alteração
     function verificarAlarmes(hora) {
         if (isMuted) return;
         const [horas, minutos, segundos] = hora.split(':');
@@ -193,8 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return string.replace(/\b\w/g, char => char.toUpperCase());
     }
 
-    // Lógica de re-sincronização foi removida pois não precisamos mais dela com essa abordagem
-    // O relógio já se corrige a cada segundo a partir da hora UTC.
-
+    // A lógica de re-sincronização não é mais necessária com este método robusto
+    if (clockIntervalId) clearInterval(clockIntervalId);
     iniciarRelogiosSincronizados();
 });
