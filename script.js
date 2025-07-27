@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("Página carregada. Iniciando script.");
 
     // --- LÓGICA DE NAVEGAÇÃO E RÁDIOS (INALTERADA) ---
     const navItems = document.querySelectorAll('.sidebar ul li');
@@ -44,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     volumeSlider.addEventListener('input', (e) => { audioPlayers.forEach(player => player.volume = e.target.value); });
 
-    // --- LÓGICA DO RELÓGIO E ALARME (VERSÃO FINAL COM UNIX TIMESTAMP) ---
+    // --- LÓGICA DO RELÓGIO E ALARME ---
     const elementoRelogio = document.getElementById('relogio');
     const elementoData = document.getElementById('data');
     const elementoRelogioNoronha = document.getElementById('relogio-noronha');
@@ -59,8 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let alarmePrincipalTocouHoje = false;
     let isMuted = false;
     let clockIntervalId = null;
-    
-    // Formatadores de data, criados uma única vez para performance
+    let authoritativeStartTime = null; 
+    let localStartTime = null; 
+
     const opcoesHora = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
     const formatadorBrasilia = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', ...opcoesHora });
     const formatadorDataBrasilia = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -80,9 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function exibirHorarios(dataUTC) {
+        console.log("Passo 4: Formatando e exibindo os horários.");
         const horaBrasilia = formatadorBrasilia.format(dataUTC);
-        
-        // A lógica de exibição, que já estava correta, permanece
         elementoRelogio.textContent = horaBrasilia;
         elementoData.textContent = capitalizarPrimeiraLetra(formatadorDataBrasilia.format(dataUTC));
         elementoRelogioNoronha.textContent = formatadorNoronha.format(dataUTC);
@@ -94,47 +95,68 @@ document.addEventListener('DOMContentLoaded', () => {
             el.style.visibility = 'visible';
             el.style.opacity = 1;
         });
-
         return horaBrasilia;
     }
 
     async function iniciarRelogiosSincronizados() {
+        console.log("Passo 1: Tentando buscar hora da API.");
         let dataUTC;
         try {
             const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
             if (!response.ok) throw new Error('API primária falhou');
             const data = await response.json();
-            // PONTO CRÍTICO: Criamos a data a partir do NÚMERO (unixtime), não do texto!
+            console.log("API retornou:", data);
+            
+            if (!data.unixtime) {
+                throw new Error("API não retornou o 'unixtime'.");
+            }
+            
             dataUTC = new Date(data.unixtime * 1000);
+            console.log("Passo 2: Hora da API convertida para objeto Date:", dataUTC);
+
         } catch (error) {
             console.warn("API falhou. Usando time.json como Plano B.", error);
             try {
                 const response = await fetch('./time.json');
                 const data = await response.json();
-                // O Plano B também usa o unixtime, que o robô agora salva
+                console.log("time.json retornou:", data);
+
+                if (!data.unixtime) {
+                    throw new Error("time.json não contém 'unixtime'.");
+                }
+                
                 dataUTC = new Date(data.unixtime * 1000);
+                console.log("Passo 2 (Fallback): Hora do time.json convertida para objeto Date:", dataUTC);
             } catch (fallbackError) {
                 console.error("Falha crítica ao carregar a hora.", fallbackError);
-                elementoRelogio.textContent = "Erro"; return;
+                elementoRelogio.textContent = "Erro de dados"; return;
             }
         }
         
         if (isNaN(dataUTC.getTime())) {
             console.error("Data obtida é inválida.");
-            elementoRelogio.textContent = "Erro"; return;
+            elementoRelogio.textContent = "Data inválida"; return;
         }
+        
+        console.log("Passo 3: Hora sincronizada com sucesso. Iniciando relógio.");
+        authoritativeStartTime = dataUTC;
+        localStartTime = Date.now();
         
         let horaBrasilia = exibirHorarios(dataUTC);
         verificarAlarmes(horaBrasilia);
 
+        if (clockIntervalId) clearInterval(clockIntervalId);
         clockIntervalId = setInterval(() => {
-            dataUTC.setSeconds(dataUTC.getSeconds() + 1);
-            horaBrasilia = exibirHorarios(dataUTC);
+            // Recalcula a data a cada segundo para máxima precisão ao voltar para a aba
+            const elapsed = Date.now() - localStartTime;
+            let dataAtualSincronizada = new Date(authoritativeStartTime.getTime() + elapsed);
+            
+            horaBrasilia = exibirHorarios(dataAtualSincronizada);
             verificarAlarmes(horaBrasilia);
         }, 1000);
     }
 
-    // O restante das funções (alarme, etc.) não precisa de alteração
+    // Funções de alarme e auxiliares (sem alterações)
     function verificarAlarmes(hora) {
         if (isMuted) return;
         const [horas, minutos, segundos] = hora.split(':');
@@ -165,7 +187,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return string.replace(/\b\w/g, char => char.toUpperCase());
     }
 
-    // A lógica de re-sincronização não é mais necessária com este método robusto
-    if (clockIntervalId) clearInterval(clockIntervalId);
+    // Lógica de re-sincronização ao voltar para a aba (RESTAURADA E MELHORADA)
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+            console.log("Aba reativada. Reiniciando sincronização.");
+            iniciarRelogiosSincronizados();
+        } else {
+            clearInterval(clockIntervalId);
+        }
+    });
+
     iniciarRelogiosSincronizados();
 });
