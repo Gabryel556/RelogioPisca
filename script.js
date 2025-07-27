@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const horaAcreFormatada = `${horaAcre}:${minutosFormatados}:${segundosFormatados}`;
         
         // 4. ATUALIZA OS OUTROS RELÓGIOS NA TELA
-        elementoRelogio.textContent = horaBrasiliaFormatada;
+        elementoRelogio.textContent = horaUtcFormatada;
         elementoRelogioNoronha.textContent = horaNoronhaFormatada;
         elementoRelogioManaus.textContent = horaManausFormatada;
         elementoRelogioAcre.textContent = horaAcreFormatada;
