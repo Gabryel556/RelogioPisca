@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const elementoRelogioNoronha = document.getElementById('relogio-noronha');
     const elementoRelogioManaus = document.getElementById('relogio-manaus');
     const elementoRelogioAcre = document.getElementById('relogio-acre');
+    const elementoRelogioUtc = document.getElementById('relogio-UTC'); // <-- LINHA ADICIONADA
     const elementoPreAlarmeSom = document.getElementById('pre-alarme-som');
     const elementoAlarmePrincipalSom = document.getElementById('alarme-principal-som');
     const elementoAlarmeGif = document.getElementById('alarme-gif');
@@ -86,35 +87,39 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {Date} dataUTC - A hora universal correta.
      */
     function exibirHorarios(dataUTC) {
-        const formatar = (timeZone, opcoes) => new Intl.DateTimeFormat('pt-BR', { timeZone, ...opcoes }).format(dataUTC);
+    const formatar = (timeZone, opcoes) => new Intl.DateTimeFormat('pt-BR', { timeZone, ...opcoes }).format(dataUTC);
 
-        // 1. CALCULA TODOS OS HORÁRIOS BRASILEIROS A PARTIR DA HORA UTC
-        const horaBrasilia = formatar('America/Sao_Paulo', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-        const dataBrasilia = capitalizarPrimeiraLetra(formatar('America/Sao_Paulo', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
-        const horaNoronha = formatar('America/Noronha', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-        const horaManaus = formatar('America/Manaus', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-        const horaAcre = formatar('America/Rio_Branco', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    // 1. CALCULA TODOS OS HORÁRIOS A PARTIR DA HORA UTC
+    const horaBrasilia = formatar('America/Sao_Paulo', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const dataBrasilia = capitalizarPrimeiraLetra(formatar('America/Sao_Paulo', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+    const horaNoronha = formatar('America/Noronha', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const horaManaus = formatar('America/Manaus', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const horaAcre = formatar('America/Rio_Branco', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const horaUtc = formatar('UTC', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); // <-- LINHA ADICIONADA
 
-        // 2. ATUALIZA A TELA COM OS VALORES JÁ CONVERTIDOS
-        elementoRelogio.textContent = horaBrasilia;
-        elementoData.textContent = dataBrasilia;
-        elementoRelogioNoronha.textContent = horaNoronha;
-        elementoRelogioManaus.textContent = horaManaus;
-        elementoRelogioAcre.textContent = horaAcre;
+    // 2. ATUALIZA A TELA COM OS VALORES JÁ CONVERTIDOS
+    elementoRelogio.textContent = horaBrasilia;
+    elementoData.textContent = dataBrasilia;
+    elementoRelogioNoronha.textContent = horaNoronha;
+    elementoRelogioManaus.textContent = horaManaus;
+    elementoRelogioAcre.textContent = horaAcre;
+    elementoRelogioUtc.textContent = horaUtc; // <-- LINHA ADICIONADA
 
-        // 3. FINALMENTE, TORNA TUDO VISÍVEL
-        elementoRelogio.style.visibility = 'visible';
-        elementoRelogio.style.opacity = 1;
-        elementoRelogioNoronha.style.visibility = 'visible';
-        elementoRelogioNoronha.style.opacity = 1;
-        elementoRelogioManaus.style.visibility = 'visible';
-        elementoRelogioManaus.style.opacity = 1;
-        elementoRelogioAcre.style.visibility = 'visible';
-        elementoRelogioAcre.style.opacity = 1;
+    // 3. FINALMENTE, TORNA TUDO VISÍVEL
+    elementoRelogio.style.visibility = 'visible';
+    elementoRelogio.style.opacity = 1;
+    elementoRelogioNoronha.style.visibility = 'visible';
+    elementoRelogioNoronha.style.opacity = 1;
+    elementoRelogioManaus.style.visibility = 'visible';
+    elementoRelogioManaus.style.opacity = 1;
+    elementoRelogioAcre.style.visibility = 'visible';
+    elementoRelogioAcre.style.opacity = 1;
+    elementoRelogioUtc.style.visibility = 'visible'; // <-- LINHA ADICIONADA
+    elementoRelogioUtc.style.opacity = 1;           // <-- LINHA ADICIONADA
 
-        // Retorna a hora de Brasília para a lógica do alarme
-        return horaBrasilia;
-    }
+    // Retorna a hora de Brasília para a lógica do alarme
+    return horaBrasilia;
+}
 
     async function iniciarRelogiosSincronizados() {
         let dataUTC;
