@@ -15,80 +15,72 @@ document.addEventListener('DOMContentLoaded', () => {
     const playButtons = document.querySelectorAll('.play-btn');
     const audioPlayers = document.querySelectorAll('.radio-player');
     const volumeSlider = document.getElementById('volume-slider');
-    let currentPlayingAudio = null;
+    let currentPlaying = null; // Guarda o que está tocando agora
     let audioWasPlayingBeforeAlarm = null;
-    let youtubePlayer; // Variável para o player do YouTube
+    let youtubePlayer;
+    let currentYoutubeVideoId = null;
 
-    // Esta função é chamada automaticamente pela API do YouTube quando ela está pronta
     window.onYouTubeIframeAPIReady = function() {
         console.log("API do YouTube pronta.");
         youtubePlayer = new YT.Player('youtube-player', {
             height: '0',
             width: '0',
-            videoId: 'e22nSImDAh4', // <<-- COLOQUE O ID DA SUA LIVE AQUI
-            playerVars: {
-                'autoplay': 0, // Não começa tocando
-                'controls': 0  // Sem controles visíveis
-            },
-            events: {
-                'onReady': onPlayerReady
-            }
+            playerVars: { 'autoplay': 0, 'controls': 0 },
+            events: { 'onReady': onPlayerReady }
         });
     };
-    
+
     function onPlayerReady(event) {
         console.log("Player do YouTube pronto.");
-        // Ajusta o volume inicial
         youtubePlayer.setVolume(volumeSlider.value * 100);
     }
+
+    // Função para pausar tudo
+    const pauseEverything = () => {
+        audioPlayers.forEach(p => p.pause());
+        if (youtubePlayer && youtubePlayer.pauseVideo) {
+            youtubePlayer.pauseVideo();
+        }
+        playButtons.forEach(b => {
+            b.classList.remove('fa-pause', 'playing');
+            b.classList.add('fa-play');
+        });
+        currentPlaying = null;
+    };
 
     playButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
             const stationDiv = btn.closest('.radio-station');
             const stationType = stationDiv.dataset.stationType;
-            const audioPlayer = stationDiv.querySelector('.radio-player');
-
-            // Pausa tudo o que estiver tocando
-            const pauseEverything = () => {
-                audioPlayers.forEach((p, i) => {
-                    p.pause();
-                    playButtons[i].classList.remove('fa-pause', 'playing');
-                    playButtons[i].classList.add('fa-play');
-                });
-                if (youtubePlayer && youtubePlayer.pauseVideo) {
-                    youtubePlayer.pauseVideo();
-                }
-                 // Reseta o ícone do botão do YouTube
-                const ytBtn = document.querySelector('[data-station-type="youtube"] .play-btn');
-                if (ytBtn) {
-                    ytBtn.classList.remove('fa-pause', 'playing');
-                    ytBtn.classList.add('fa-play');
-                }
-            };
 
             if (stationType === 'youtube') {
-                if (youtubePlayer && youtubePlayer.getPlayerState() === 1) { // 1 = playing
-                    youtubePlayer.pauseVideo();
-                    currentPlayingAudio = null;
-                } else {
+                const videoId = stationDiv.dataset.videoId;
+                if (currentPlaying && currentPlaying.type === 'youtube' && currentYoutubeVideoId === videoId) {
+                    // Clicou na mesma live que está tocando -> Pausa
                     pauseEverything();
-                    if (youtubePlayer && youtubePlayer.playVideo) {
-                        youtubePlayer.playVideo();
-                        currentPlayingAudio = { type: 'youtube', player: youtubePlayer };
+                } else {
+                    // Toca uma nova live
+                    pauseEverything();
+                    if (youtubePlayer && youtubePlayer.loadVideoById) {
+                        youtubePlayer.loadVideoById(videoId);
+                        currentYoutubeVideoId = videoId;
+                        currentPlaying = { type: 'youtube', player: youtubePlayer, button: btn };
                         btn.classList.remove('fa-play');
                         btn.classList.add('fa-pause', 'playing');
                     }
                 }
             } else { // Para as rádios normais com tag <audio>
-                if (currentPlayingAudio && currentPlayingAudio.player === audioPlayer) {
-                    audioPlayer.pause();
-                    currentPlayingAudio = null;
+                const audioPlayer = stationDiv.querySelector('.radio-player');
+                if (currentPlaying && currentPlaying.type === 'audio' && currentPlaying.player === audioPlayer) {
+                    // Clicou na mesma rádio que está tocando -> Pausa
+                    pauseEverything();
                 } else {
+                    // Toca uma nova rádio
                     pauseEverything();
                     const playPromise = audioPlayer.play();
                     if (playPromise !== undefined) {
                         playPromise.then(_ => {
-                            currentPlayingAudio = { type: 'audio', player: audioPlayer };
+                            currentPlaying = { type: 'audio', player: audioPlayer, button: btn };
                             btn.classList.remove('fa-play');
                             btn.classList.add('fa-pause', 'playing');
                         }).catch(error => { console.error("Erro ao tocar a rádio:", error); });
@@ -100,22 +92,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     volumeSlider.addEventListener('input', (e) => {
         const newVolume = e.target.value;
-        // Volume para as tags <audio> (0 a 1)
         audioPlayers.forEach(player => player.volume = newVolume);
-        // Volume para o YouTube (0 a 100)
         if (youtubePlayer && youtubePlayer.setVolume) {
             youtubePlayer.setVolume(newVolume * 100);
         }
     });
-    
+
     function tocarPreAlarme() {
         if (isMuted) return;
-        if (currentPlayingAudio) {
-            audioWasPlayingBeforeAlarm = currentPlayingAudio;
-            if(currentPlayingAudio.type === 'youtube') {
-                currentPlayingAudio.player.pauseVideo();
+        if (currentPlaying) {
+            audioWasPlayingBeforeAlarm = currentPlaying;
+            if (currentPlaying.type === 'youtube') {
+                currentPlaying.player.pauseVideo();
             } else {
-                currentPlayingAudio.player.pause();
+                currentPlaying.player.pause();
             }
         } else {
             audioWasPlayingBeforeAlarm = null;
@@ -123,15 +113,15 @@ document.addEventListener('DOMContentLoaded', () => {
         elementoPreAlarmeSom.currentTime = 0;
         elementoPreAlarmeSom.play();
     }
-    
+
     function tocarAlarmePrincipal() {
         if (isMuted) return;
-        if (currentPlayingAudio && !audioWasPlayingBeforeAlarm) {
-            audioWasPlayingBeforeAlarm = currentPlayingAudio;
-            if(currentPlayingAudio.type === 'youtube') {
-                currentPlayingAudio.player.pauseVideo();
+        if (currentPlaying && !audioWasPlayingBeforeAlarm) {
+            audioWasPlayingBeforeAlarm = currentPlaying;
+            if (currentPlaying.type === 'youtube') {
+                currentPlaying.player.pauseVideo();
             } else {
-                currentPlayingAudio.player.pause();
+                currentPlaying.player.pause();
             }
         }
         elementoAlarmeGif.style.display = 'block';
@@ -144,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elementoAlarmePrincipalSom.currentTime = 0;
             elementoAlarmePrincipalSom.loop = false;
             if (audioWasPlayingBeforeAlarm) {
-                if(audioWasPlayingBeforeAlarm.type === 'youtube') {
+                if (audioWasPlayingBeforeAlarm.type === 'youtube') {
                     audioWasPlayingBeforeAlarm.player.playVideo();
                 } else {
                     audioWasPlayingBeforeAlarm.player.play();
