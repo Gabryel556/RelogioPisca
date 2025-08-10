@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- LÓGICA DE NAVEGAÇÃO E RÁDIOS (INALTERADA) ---
     const navItems = document.querySelectorAll('.sidebar ul li');
     const pages = document.querySelectorAll('.page');
     navItems.forEach(item => {
@@ -12,10 +11,26 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(targetId).classList.add('active');
         });
     });
+
+    const categoryTitles = document.querySelectorAll('.category-title');
+
+    categoryTitles.forEach(title => {
+        title.addEventListener('click', () => {
+            const parentCategory = title.parentElement;
+            const wasActive = parentCategory.classList.contains('active');
+
+            document.querySelectorAll('.radio-category').forEach(category => {
+                category.classList.remove('active');
+            });
+            if (!wasActive) {
+                parentCategory.classList.add('active');
+            }
+        });
+    });
     const playButtons = document.querySelectorAll('.play-btn');
     const audioPlayers = document.querySelectorAll('.radio-player');
     const volumeSlider = document.getElementById('volume-slider');
-    let currentPlaying = null; // Guarda o que está tocando agora
+    let currentPlaying = null;
     let audioWasPlayingBeforeAlarm = null;
     let youtubePlayer;
     let currentYoutubeVideoId = null;
@@ -35,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
         youtubePlayer.setVolume(volumeSlider.value * 100);
     }
 
-    // Função para pausar tudo
     const pauseEverything = () => {
         audioPlayers.forEach(p => p.pause());
         if (youtubePlayer && youtubePlayer.pauseVideo) {
@@ -56,10 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (stationType === 'youtube') {
                 const videoId = stationDiv.dataset.videoId;
                 if (currentPlaying && currentPlaying.type === 'youtube' && currentYoutubeVideoId === videoId) {
-                    // Clicou na mesma live que está tocando -> Pausa
                     pauseEverything();
                 } else {
-                    // Toca uma nova live
                     pauseEverything();
                     if (youtubePlayer && youtubePlayer.loadVideoById) {
                         youtubePlayer.loadVideoById(videoId);
@@ -69,13 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.classList.add('fa-pause', 'playing');
                     }
                 }
-            } else { // Para as rádios normais com tag <audio>
+            } else {
                 const audioPlayer = stationDiv.querySelector('.radio-player');
                 if (currentPlaying && currentPlaying.type === 'audio' && currentPlaying.player === audioPlayer) {
-                    // Clicou na mesma rádio que está tocando -> Pausa
                     pauseEverything();
                 } else {
-                    // Toca uma nova rádio
                     pauseEverything();
                     const playPromise = audioPlayer.play();
                     if (playPromise !== undefined) {
@@ -144,7 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     volumeSlider.addEventListener('input', (e) => { audioPlayers.forEach(player => player.volume = e.target.value); });
 
-    // --- LÓGICA DO RELÓGIO E ALARME (VERSÃO FINAL E OTIMIZADA) ---
     const elementoRelogio = document.getElementById('relogio');
     const elementoData = document.getElementById('data');
     const elementoRelogioNoronha = document.getElementById('relogio-noronha');
@@ -195,7 +204,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return horaBrasilia;
     }
 
-    // Função que inicia o loop de atualização a partir de uma data
     function iniciarLoopDoRelogio(dataDePartida) {
         let dataAtualSincronizada = dataDePartida;
         const horaBrasilia = exibirHorarios(dataAtualSincronizada);
@@ -233,38 +241,27 @@ document.addEventListener('DOMContentLoaded', () => {
             elementoRelogio.textContent = "Data Inválida"; return;
         }
         
-        // Guarda os pontos de partida para a re-sincronização
         authoritativeStartTime = dataUTC;
         localStartTime = Date.now();
-        
-        // Inicia o relógio pela primeira vez
         iniciarLoopDoRelogio(authoritativeStartTime);
     }
 
-    // Lógica de re-sincronização MATEMÁTICA ao voltar para a aba
     document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
-            // Quando a aba fica inativa, apenas limpa o timer para economizar recursos.
             clearInterval(clockIntervalId);
         } else {
-            // Quando a aba volta, recalcula e reinicia, SEM CHAMADA DE REDE.
-            if (!authoritativeStartTime || !localStartTime) return; // Proteção
+            if (!authoritativeStartTime || !localStartTime) return;
 
-            // 1. Calcula quanto tempo (ms) se passou desde o carregamento inicial
             const elapsedMilliseconds = Date.now() - localStartTime;
             
-            // 2. Cria a nova data correta, somando o tempo passado à hora inicial oficial
             const correctedDate = new Date(authoritativeStartTime.getTime() + elapsedMilliseconds);
 
-            // 3. Reinicia o loop do relógio a partir do tempo corrigido
             iniciarLoopDoRelogio(correctedDate);
         }
     });
 
-    // Inicia todo o processo
     sincronizacaoInicial();
 
-    // Funções de alarme e auxiliares (sem alterações)
     function verificarAlarmes(hora) {
         if (isMuted) return;
         const [horas, minutos, segundos] = hora.split(':');

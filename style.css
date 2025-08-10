@@ -199,61 +199,105 @@ body {
     transform: translateY(-2px);
 }
 
-/* --- Estilos do Player de Música Lo-Fi --- */
 .radio-container {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background-color: rgba(18, 18, 18, 0.6);
-    padding: 15px;
+    background-color: rgba(18, 18, 18, 0.7);
+    padding: 10px;
     border-radius: 15px;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 100;
+    width: 250px; /* Largura fixa para o container */
+}
+
+.category-title {
     display: flex;
-    flex-direction: column; /* Empilha os itens verticalmente */
-    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-family: 'Roboto', sans-serif;
+    color: #E0E0E0;
+    font-size: 1rem;
+}
+
+.category-title:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.category-title span i {
+    margin-right: 10px;
+    color: #00FFFF;
+}
+
+.category-arrow {
+    transition: transform 0.3s ease;
+}
+
+.radio-category.active .category-arrow {
+    transform: rotate(180deg);
+}
+
+.category-content {
+    /* A mágica do acordeão acontece aqui */
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out;
+    padding: 0 5px; /* Pequeno padding lateral para as estações */
+}
+
+.radio-category.active .category-content {
+    max-height: 300px; /* Altura máxima para expandir. Ajuste se tiver muitas estações */
+    margin-top: 10px;
 }
 
 .radio-station {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 200px; /* Largura fixa para alinhamento */
+    padding: 8px 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.radio-station:last-child {
+    border-bottom: none;
 }
 
 .station-title {
     font-family: 'Roboto', sans-serif;
-    color: #E0E0E0;
-    font-size: 1rem;
+    color: #CCCCCC;
+    font-size: 0.9rem;
 }
 
 .play-btn {
-    font-size: 18px;
+    font-size: 16px;
     color: #AAAAAA;
     cursor: pointer;
     transition: color 0.2s, transform 0.2s;
-    padding: 5px; /* Aumenta a área de clique */
+    padding: 5px;
 }
-
-.play-btn:hover {
-    color: #FFFFFF;
+.play-btn:hover { 
+    color: #FFFFFF; 
 }
-
-.play-btn.playing {
-    color: #00FFFF; /* Cor ciano quando está tocando */
+.play-btn.playing { 
+    color: #00FFFF; 
 }
-
-.play-btn.playing:hover {
-    transform: scale(1.1);
+.play-btn.playing:hover { 
+    transform: scale(1.1); 
 }
 
 .volume-control {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding-top: 10px;
+    padding-top: 15px;
+    margin-top: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -308,7 +352,6 @@ footer a {
 footer a:hover {
     text-shadow: 0 0 8px rgba(0, 255, 255, 0.8); /* Adiciona um brilho ao passar o mouse */
 }
-/* --- Estilos dos Relógios Secundários --- */
 .outros-relogios-container {
     display: flex;
     justify-content: space-around; /* Espaça os relógios igualmente */
@@ -335,6 +378,99 @@ footer a:hover {
     font-size: 2.2rem;
     font-weight: 600;
     color: #E0E0E0;
-    opacity: 0; /* Começa invisível */
-    transition: opacity 0.5s ease-in-out; /* Animação suave para aparecer */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+@media (max-width: 768px) {
+
+    body {
+        display: block; 
+        padding-bottom: 80px;
+    }
+
+    .sidebar {
+        width: 60px;
+        padding-top: 15px;
+    }
+
+    .sidebar:hover {
+        width: 60px;
+    }
+
+    .sidebar ul li i {
+        margin-right: 0;
+    }
+
+    .sidebar:hover .nav-text, .nav-text {
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .content {
+        margin-left: 60px;
+        padding: 10px;
+    }
+
+    .sidebar:hover ~ .content {
+        margin-left: 60px;
+    }
+
+    .relogio-container {
+        padding: 20px 15px;
+        margin-top: 20px;
+    }
+
+    .relogio-container h1 {
+        font-size: 1.8rem;
+    }
+
+    #relogio {
+        font-size: 4rem;
+        letter-spacing: 2px;
+    }
+
+    #data {
+        font-size: 1.1rem; /* Diminui o texto da data */
+    }
+
+    .outros-relogios-container {
+        flex-direction: column; /* Empilha os relógios verticalmente */
+        gap: 20px; /* Adiciona espaço entre os relógios empilhados */
+        align-items: center;
+        margin-top: 20px;
+        padding-top: 15px;
+    }
+
+    .fuso-titulo {
+        font-size: 0.9rem;
+    }
+
+    .fuso-hora {
+        font-size: 1.8rem;
+    }
+    
+    .discord-container {
+        padding: 20px;
+    }
+
+    .discord-container h1 {
+        font-size: 1.8rem;
+    }
+    
+    .discord-container p {
+        font-size: 1rem;
+    }
+    
+    .radio-container {
+        right: auto;
+        left: 20px;
+        bottom: 90px; /* Sobe para não ficar em cima do rodapé */
+    }
+
+    footer {
+        /* O rodapé continua fixo, mas com fonte menor */
+        font-size: 0.7rem;
+        padding: 8px 0;
+    }
 }
