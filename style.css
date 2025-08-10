@@ -9,7 +9,6 @@ body {
     display: flex;
 }
 
-/* --- Barra Lateral --- */
 .sidebar {
     width: 80px;
     background-color: #181818;
@@ -56,18 +55,17 @@ body {
 .nav-text {
     font-size: 18px;
     white-space: nowrap;
-    opacity: 0; /* Começa totalmente transparente */
-    visibility: hidden; /* Garante que está escondido e não pode ser selecionado */
+    opacity: 0;
+    visibility: hidden;
     transition: opacity 0.2s ease-in-out;
 }
 
 .sidebar:hover .nav-text {
-    opacity: 1; /* O texto se torna 100% visível */
+    opacity: 1;
     visibility: visible;
-    transition-delay: 0.1s; /* Um pequeno atraso para o texto aparecer depois que a barra começar a expandir */
+    transition-delay: 0.1s;
 }
 
-/* --- Conteúdo Principal --- */
 .content {
     flex-grow: 1;
     margin-left: 80px;
@@ -79,7 +77,6 @@ body {
     margin-left: 250px;
 }
 
-/* --- Controle das Páginas/Seções --- */
 .page {
     display: none;
     justify-content: center;
@@ -91,9 +88,8 @@ body {
     display: flex;
 }
 
-/* --- Estilos do Relógio (Container) --- */
 .relogio-container {
-    position: relative; /* Necessário para posicionar o botão de mutar */
+    position: relative;
     background: #1E1E1E;
     padding: 40px 60px;
     border-radius: 20px;
@@ -102,7 +98,6 @@ body {
     text-align: center;
 }
 
-/* --- NOVO: Estilos do Botão de Mutar --- */
 .mute-button {
     position: absolute;
     top: 20px;
@@ -119,8 +114,8 @@ body {
 }
 
 .mute-button.muted i::before {
-    content: "\f6a9"; /* Ícone fas fa-bell-slash */
-    color: #F44336; /* Vermelho */
+    content: "\f6a9";
+    color: #F44336;
 }
 /* ------------------------------------ */
 
@@ -137,8 +132,8 @@ body {
     font-size: 6rem;
     font-weight: 700;
     letter-spacing: 5px;
-    opacity: 0; /* Começa invisível */
-    transition: opacity 0.5s ease-in-out; /* Animação suave para aparecer */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
 }
 
 #data {
@@ -154,7 +149,6 @@ body {
     border-radius: 10px;
 }
 
-/* --- Estilos da Seção Discord --- */
 .discord-container {
     text-align: center;
     background: #2c2f33;
@@ -210,7 +204,7 @@ body {
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 100;
-    width: 250px; /* Largura fixa para o container */
+    width: 250px;
 }
 
 .category-title {
@@ -245,15 +239,14 @@ body {
 }
 
 .category-content {
-    /* A mágica do acordeão acontece aqui */
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.4s ease-in-out;
-    padding: 0 5px; /* Pequeno padding lateral para as estações */
+    padding: 0 5px;
 }
 
 .radio-category.active .category-content {
-    max-height: 300px; /* Altura máxima para expandir. Ajuste se tiver muitas estações */
+    max-height: 300px;
     margin-top: 10px;
 }
 
@@ -321,44 +314,43 @@ body {
     border-radius: 50%;
 }
 
-/* --- Estilos do Rodapé --- */
 footer {
-    position: fixed; /* Fixa o rodapé na tela, ele não vai rolar com o conteúdo */
-    bottom: 0;       /* Alinha na parte de baixo da tela */
-    left: 0;         /* Garante que comece no canto esquerdo */
-    width: 100%;     /* Faz o rodapé ocupar toda a largura da tela */
-    padding: 10px 0; /* Adiciona um espaçamento interno para não ficar colado na borda */
-    background-color: rgba(18, 18, 18, 0.5); /* Fundo escuro semi-transparente */
-    backdrop-filter: blur(5px); /* Efeito de vidro fosco, combinando com o player */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px 0;
+    background-color: rgba(18, 18, 18, 0.5);
+    backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    border-top: 1px solid rgba(0, 255, 255, 0.1); /* Linha ciano sutil no topo */
-    text-align: center; /* Centraliza o texto */
-    font-family: 'Roboto', sans-serif; /* Usa a mesma fonte do resto do corpo */
-    font-size: 1.5rem;  /* Deixa a fonte um pouco menor, como é comum em rodapés */
-    color: #AAAAAA;    /* Cor cinza claro para o texto, sendo discreto */
+    border-top: 1px solid rgba(0, 255, 255, 0.1);
+    text-align: center;
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.5rem;
+    color: #AAAAAA;
 }
 
 footer p {
-    margin: 4px 0; /* Adiciona um pequeno espaço entre as linhas de texto */
+    margin: 4px 0;
 }
 
 footer a {
-    color: #00FFFF; /* Deixa o link com a cor ciano do tema */
-    text-decoration: none; /* Remove o sublinhado padrão de links */
+    color: #00FFFF;
+    text-decoration: none;
     font-weight: 600;
-    transition: text-shadow 0.3s ease; /* Adiciona uma transição suave para o efeito de brilho */
+    transition: text-shadow 0.3s ease;
 }
 
 footer a:hover {
-    text-shadow: 0 0 8px rgba(0, 255, 255, 0.8); /* Adiciona um brilho ao passar o mouse */
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
 }
 .outros-relogios-container {
     display: flex;
-    justify-content: space-around; /* Espaça os relógios igualmente */
+    justify-content: space-around;
     align-items: center;
-    margin-top: 30px; /* Espaço abaixo da data */
+    margin-top: 30px;
     padding-top: 20px;
-    border-top: 1px solid rgba(0, 255, 255, 0.2); /* Linha sutil de separação */
+    border-top: 1px solid rgba(0, 255, 255, 0.2);
     width: 100%;
 }
 
@@ -431,12 +423,12 @@ footer a:hover {
     }
 
     #data {
-        font-size: 1.1rem; /* Diminui o texto da data */
+        font-size: 1.1rem;
     }
 
     .outros-relogios-container {
-        flex-direction: column; /* Empilha os relógios verticalmente */
-        gap: 20px; /* Adiciona espaço entre os relógios empilhados */
+        flex-direction: column;
+        gap: 20px;
         align-items: center;
         margin-top: 20px;
         padding-top: 15px;
@@ -465,11 +457,10 @@ footer a:hover {
     .radio-container {
         right: auto;
         left: 20px;
-        bottom: 90px; /* Sobe para não ficar em cima do rodapé */
+        bottom: 90px;
     }
 
     footer {
-        /* O rodapé continua fixo, mas com fonte menor */
         font-size: 0.7rem;
         padding: 8px 0;
     }
