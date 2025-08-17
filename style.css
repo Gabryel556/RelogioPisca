@@ -329,7 +329,24 @@ footer {
     font-size: 1.5rem;
     color: #AAAAAA;
 }
+.discord-pm-button {
+    display: inline-block;
+    padding: 8px 18px;
+    border: 2px solid #8e44ad; /* Borda no tom roxo principal */
+    color: #cda5ff; /* Texto no tom roxo claro */
+    background-color: transparent;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
 
+.discord-pm-button:hover {
+    background-color: #8e44ad; /* Fundo fica roxo ao passar o mouse */
+    color: #ffffff; /* Texto fica branco */
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(142, 68, 173, 0.4);
+}
 footer p {
     margin: 4px 0;
 }
