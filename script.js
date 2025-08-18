@@ -308,4 +308,47 @@ document.addEventListener('DOMContentLoaded', () => {
     function capitalizarPrimeiraLetra(string) {
         return string.replace(/\b\w/g, char => char.toUpperCase());
     }
+    tsParticles.load("tsparticles", {
+  fpsLimit: 120,
+  particles: {
+    number: {
+      value: 150, // Mais partículas para um efeito preenchido
+      density: {
+        enable: true,
+        value_area: 800,
+      },
+    },
+    color: {
+      value: "#00BFFF", // Cor azul do seu tema
+    },
+    shape: {
+      type: "circle",
+    },
+    opacity: {
+      value: { min: 0.1, max: 0.5 },
+    },
+    size: {
+      value: { min: 1, max: 3 },
+    },
+    move: {
+      enable: true,
+      speed: 6, // Velocidade alta
+      direction: "bottom-right", // Direção diagonal
+      straight: true, // Movimento em linha reta
+      out_mode: "out",
+      trail: { // O rastro do meteoro
+        enable: true,
+        fillColor: "#0d0d0d", // Cor do fundo para apagar o rastro
+        length: 20,
+      },
+    },
+  },
+  interactivity: {
+    detect_on: "canvas",
+    events: {
+      resize: true,
+    },
+  },
+  retina_detect: true,
+});
 });
