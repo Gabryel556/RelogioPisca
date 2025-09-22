@@ -1,10 +1,14 @@
 name: Update Time Data
 
 on:
+  # Permite que você rode a automação manualmente pela aba "Actions"
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
 
+  # Roda a automação automaticamente a cada 15 minutos (ajuste se desejar)
+  schedule:
+    - cron: '*/15 * * * *'
+
+# Concede a permissão necessária para o robô salvar o arquivo
 permissions:
   contents: write
 
@@ -12,24 +16,23 @@ jobs:
   update_time_job:
     runs-on: ubuntu-latest
     steps:
+      # Passo 1: Pega o código do seu repositório
       - name: Check out repository code
         uses: actions/checkout@v4
 
+      # Passo 2: Gera a hora a partir do próprio relógio do servidor (sem API externa)
       - name: Update time.json file
         run: |
-          # MUDANÇA: Usando a API alternativa 'timeapi.io' para evitar o erro de SSL
-          API_RESPONSE=$(curl -s https://timeapi.io/api/Time/current/zone?timeZone=Etc/UTC)
+          # Pega a data ISO e o Unix time diretamente do sistema, em UTC
+          ISO_DATETIME=$(date -u -I'seconds')
+          UNIX_TIME=$(date -u +%s)
           
-          # Ajuste para extrair os dados da nova API
-          ISO_DATETIME=$(echo $API_RESPONSE | jq -r .dateTime)
-          # A nova API não fornece 'unixtime', então vamos gerá-lo a partir da data ISO
-          UNIX_TIME=$(date -d "$ISO_DATETIME" +%s)
-          
-          # Cria o novo arquivo time.json com ambos os formatos
+          # Cria o arquivo time.json com a hora do servidor
           echo "{\"dateTime\": \"$ISO_DATETIME\", \"unixtime\": $UNIX_TIME}" > time.json
           
-          echo "Arquivo time.json foi atualizado com sucesso pela nova API."
+          echo "Arquivo time.json foi atualizado com sucesso usando o relógio local do servidor."
 
+      # Passo 3: Salva e envia o arquivo time.json de volta para o repositório
       - name: Commit and push if changed
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
