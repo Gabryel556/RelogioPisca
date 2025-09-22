@@ -1,10 +1,16 @@
 name: Update Time Data
 
 on:
-  schedule:
-    - cron: '*/15 * * * *'
+  # Permite que você rode a automação manualmente pela aba "Actions" para testar
   workflow_dispatch:
 
+  # Roda a automação automaticamente a cada 5 minutos
+  schedule:
+    - cron: '*/5 * * * *'
+
+# PERMISSÕES: Bloco de código essencial que concede ao 'robô' a permissão
+# para 'escrever' (write) no 'conteúdo' (contents) do seu repositório.
+# Isto corrige os erros de 'acesso proibido' (Erro 403).
 permissions:
   contents: write
 
@@ -12,23 +18,29 @@ jobs:
   update_time_job:
     runs-on: ubuntu-latest
     steps:
+      # Passo 1: O robô faz o download do seu código para poder trabalhar com ele.
       - name: Check out repository code
         uses: actions/checkout@v4
 
-      - name: Update time.json
+      # Passo 2: Roda os comandos para buscar a hora e criar o arquivo.
+      - name: Update time.json file
         run: |
-          # Busca a resposta completa da API
+          # Busca a resposta completa e segura da API
           API_RESPONSE=$(curl -s https://worldtimeapi.org/api/timezone/Etc/UTC)
           
-          # Extrai os dois valores que precisamos
+          # Extrai os dois formatos de hora que precisamos
           ISO_DATETIME=$(echo $API_RESPONSE | jq -r .utc_datetime)
           UNIX_TIME=$(echo $API_RESPONSE | jq -r .unixtime)
           
-          # Cria o novo arquivo time.json com ambos os formatos
+          # Cria/sobrescreve o arquivo time.json com a hora mais recente
           echo "{\"dateTime\": \"$ISO_DATETIME\", \"unixtime\": $UNIX_TIME}" > time.json
+          
+          echo "Arquivo time.json foi atualizado com sucesso."
 
+      # Passo 3: Salva e envia o arquivo time.json atualizado de volta para o seu repositório.
+      # Esta ação só fará um novo commit se o arquivo realmente tiver mudado.
       - name: Commit and push if changed
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'chore: update time.json'
+          commit_message: 'chore(bot): update time.json'
           file_pattern: 'time.json'
