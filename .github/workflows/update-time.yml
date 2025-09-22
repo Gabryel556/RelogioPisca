@@ -17,15 +17,18 @@ jobs:
 
       - name: Update time.json file
         run: |
-          # Adicionado --tlsv1.2 para forçar uma versão de segurança compatível e evitar o erro 35
-          API_RESPONSE=$(curl -s --tlsv1.2 https://worldtimeapi.org/api/timezone/Etc/UTC)
+          # MUDANÇA: Usando a API alternativa 'timeapi.io' para evitar o erro de SSL
+          API_RESPONSE=$(curl -s https://timeapi.io/api/Time/current/zone?timeZone=Etc/UTC)
           
-          ISO_DATETIME=$(echo $API_RESPONSE | jq -r .utc_datetime)
-          UNIX_TIME=$(echo $API_RESPONSE | jq -r .unixtime)
+          # Ajuste para extrair os dados da nova API
+          ISO_DATETIME=$(echo $API_RESPONSE | jq -r .dateTime)
+          # A nova API não fornece 'unixtime', então vamos gerá-lo a partir da data ISO
+          UNIX_TIME=$(date -d "$ISO_DATETIME" +%s)
           
+          # Cria o novo arquivo time.json com ambos os formatos
           echo "{\"dateTime\": \"$ISO_DATETIME\", \"unixtime\": $UNIX_TIME}" > time.json
           
-          echo "Arquivo time.json foi atualizado com sucesso."
+          echo "Arquivo time.json foi atualizado com sucesso pela nova API."
 
       - name: Commit and push if changed
         uses: stefanzweifel/git-auto-commit-action@v5
